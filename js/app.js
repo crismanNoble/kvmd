@@ -133,8 +133,16 @@ function resetListeners(){
 		if (e.which == 39) {//right
 			logBLU(currentResult);
 		}
+		if(e.which == 27) {
+			clearout(currentResult);
+		}
 
 	});
+
+	$('.clearout').click(function(){
+		var currentResult = $(this).data('result');
+		clearout(currentResult);
+	})
 
 
 }
@@ -142,7 +150,6 @@ function resetListeners(){
 function locateIMDBID(result){
 	var $result = $($('[data-resultRow="'+result+'"]')[0]);
 	var tmdbid = $result.find('.tmdbid').text();
-
 
 	var success = function(d){
 		console.log('found byid:');
@@ -185,6 +192,24 @@ function saveThisResult(result){
 
 }
 
+function clearout(currentResult) {
+	console.log(currentResult);
+	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
+
+	var $counter1 = $result.find('.dvdcount');
+	$counter1.addClass('clearedOut');
+	var $counter2 = $result.find('.blucount');
+	$counter2.addClass('clearedOut');
+
+	var timeoutID = window.setTimeout(function(){
+		$counter1.removeClass('clearedOut');
+		$counter2.removeClass('clearedOut');
+	}, 200);
+	$counter1.text(0);
+	$counter2.text(0);
+
+}
+
 function logDVD(currentResult){
 	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
 
@@ -220,6 +245,9 @@ function activateNextResult(currentResult) {
 	console.log('heading to:' + nextResult);
 	$('#result_'+nextResult).focus();
 
+	$('.result').removeClass('activatedRightNow');
+	$('#result_'+nextResult).parent().parent().addClass('activatedRightNow');
+
 	//what about when you are at the end??
 }
 
@@ -229,9 +257,12 @@ function activatePrevResult(currentResult) {
 		nextResult = parseInt(currentResult) - 1;
 		console.log('heading to:' + nextResult);
 		$('#result_'+nextResult).focus();
+		$('.result').removeClass('activatedRightNow');
+		$('#result_'+nextResult).parent().parent().addClass('activatedRightNow');
 	}
 
 	if (currentResult == 0) {
+		$('.result').removeClass('activatedRightNow');
 		$('#searchbox').val('');
 		$('#searchbox').focus();
 	}

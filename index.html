@@ -19,14 +19,14 @@
 	<script id="result-tmdb" type="text/x-handlebars-template">
 		{{#each results}}
 			<tr class="result" id="tmdbid_{{id}}" data-resultRow="{{@index}}">
-				<td><input type="text" id="result_{{@index}}" class="activated" data-result="{{@index}}"></input></td>
-				<td>dvds:<span class="count dvdcount">0</span>blu<span class="count blucount">0</span>
-				<button>clear</button>
+				<td class="activator"><input type="text" id="result_{{@index}}" class="activated" data-result="{{@index}}"></input></td>
+				<td class="counter">dvd<span class="count dvdcount">0</span>blu<span class="count blucount">0</span>
+				<button class="clearout" data-result="{{@index}}">clear</button>
 				</td>
-				<td><p>{{year}}</p></td>
+				<td class="year"><p>{{year}}</p></td>
 		    <td class="title"><p>{{title}}</p></td>
 		    <td class="overview"><p>{{overview}}</p></td>
-		    <td class="tmdbid">{{id}}</td>
+		    <td class="tmdbid" style="display:none">{{id}}</td>
 		  </tr>
 		{{/each}}
 	</script>
@@ -73,11 +73,17 @@
 			}
 
 			td p {
-				max-width: 30em;
+				max-width: 26em;
 				font-size: 14px;
 				height: 16px;
 			}
 
+			.counter {
+				width: 170px;
+			}
+			.year {
+				width: 40px;
+			}
 			.count {
 				display: inline-block;
 				padding: 0 5px;
@@ -93,6 +99,9 @@
 			.count.plusOne {
 				background-color: green;
 			}
+			.count.clearedOut {
+				background-color: red;
+			}
 
 			.activated {
 				content: "blah";
@@ -100,14 +109,28 @@
 				background: white;
 				border: white;
 				color: white;
-				height: 10px;
-				width: 10px;
+				height: 15px;
+				width: 15px;
 				outline: none;
 				padding: 0;
 			}
 			.activated:focus {
 				background: purple;
 			}
+			td.overview {
+				width: 50%;
+				font-size: 12px;
+			}
+			.overview p {
+				max-width: 100%;
+			}
+			#results {
+				width: 100%;
+			}
+			.activatedRightNow {
+				background-color: #f2f2f2;
+			}
+
 	</style>
 
 </head>
