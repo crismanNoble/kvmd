@@ -1,5 +1,7 @@
 <html>
 <head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<script src="js/jquery.js"></script>
 	<script src="js/underscore.js"></script>
 	<script src="js/handlebars.js"></script>
@@ -7,7 +9,7 @@
 
 	<script id="result-omdb" type="text/x-handlebars-template">
 	  <tr class="entry">
-	  		<td><input type="checkbox"></td>
+	  		<td><button>dvd</button></td>
 		    <td>{{Title}}</td>
 		    <td>{{Released}}</td>
 		    <td class="overview"><p>{{Plot}}</p></div>
@@ -16,46 +18,96 @@
 
 	<script id="result-tmdb" type="text/x-handlebars-template">
 		{{#each results}}
-			<tr class="result" id="tmdbid_{{id}}">
-				<td><input type="checkbox"></td>
-				<td>{{year}}</td>
+			<tr class="result" id="tmdbid_{{id}}" data-resultRow="{{@index}}">
+				<td><input type="text" id="result_{{@index}}" class="activated" data-result="{{@index}}"></input></td>
+				<td>dvds:<span class="count dvdcount">0</span>blu<span class="count blucount">0</span>
+				<button>clear</button>
+				</td>
+				<td><p>{{year}}</p></td>
 		    <td class="title"><p>{{title}}</p></td>
-		    <td class="overview"><p>{{overview}}</p></div>
-		    <td>{{id}}</td>
+		    <td class="overview"><p>{{overview}}</p></td>
+		    <td class="tmdbid">{{id}}</td>
 		  </tr>
 		{{/each}}
 	</script>
-		<script id="result-tmdb-ext" type="text/x-handlebars-template">
-		    {{#if poster_path}}
-		    	<td class="img"><img src="https://image.tmdb.org/t/p/w150{{poster_path}}" /></td>
-		    {{else}}
-		    	<td class="img">_nf_</td>
-		    {{/if}}
-		    <td>{{imdb_id}}</td>
-	</script>
+<script id="result-tmdb-ext" type="text/x-handlebars-template">
+	    {{#if poster_path}}
+	    	<td class="img"><img src="https://image.tmdb.org/t/p/w150{{poster_path}}" /></td>
+	    {{else}}
+	    	<td class="img">_nf_</td>
+	    {{/if}}
+	    <td>{{imdb_id}}</td>
+</script>
 
+<script id="result-tmdb-next" type="text/x-handlebars-template">
+	{{#greaterThan page 1}}
+		<button id="prev" class="nexty" data-page="{{page}}">prev page</button>
+	{{/greaterThan}}
+	{{#greaterThan total_pages page}}
+		<button id="next" class="nexty" data-page="{{page}}">next page</button>
+		<span class="nexty">page {{page}} of {{total_pages}}</span>
+	{{/greaterThan}}
+</script>
 
 	<script src="js/app.js"></script>
 
 	<style>
-	.img img {
-		height: 30px;
-	}
-		* {
-			font-family: monospace;
+		#next {
+			margin-right: 10px;
 		}
-	p {
-		margin: 0;
-	}
-	.title p,.overview p {
-		max-width: 200px;
-			height: 16px;
+		.img img {
+			height: 30px;
+		}
+			* {
+				font-family: monospace;
+				font-size: 14px;
+			}
+		p {
+			margin: 0;
+		}
+		.title p,.overview p {
 			overflow: hidden;
-			font-size: 16px;
-	}
-		th {
-			text-align: left;
 		}
+			th {
+				text-align: left;
+			}
+
+			td p {
+				max-width: 30em;
+				font-size: 14px;
+				height: 16px;
+			}
+
+			.count {
+				display: inline-block;
+				padding: 0 5px;
+				border-right: 1px solid black;
+				margin-right: 5px;
+			}
+
+			.count {
+				position: relative;
+				background-color: white;
+				transition: all .2s linear;
+			}
+			.count.plusOne {
+				background-color: green;
+			}
+
+			.activated {
+				content: "blah";
+				display: inline-block;
+				background: white;
+				border: white;
+				color: white;
+				height: 10px;
+				width: 10px;
+				outline: none;
+				padding: 0;
+			}
+			.activated:focus {
+				background: purple;
+			}
 	</style>
 
 </head>
@@ -73,16 +125,14 @@
 
 <table id="results" style="display:none">
 	<tr>
+		<th></th>
 		<th>Own?</th>
 		<th>Year</th>
 		<th>Title</th>
 		<th>plot</th>
-		<th>TMDB id</th>
-		<th>Poster</th>
-		<th>IMDB id</th>
 	</tr>
 </table>
-
+<div id="nav"></div>
 <table id="omdb" class="resultSet">
 </table>
 <table id="tmdb" class="resultSet">
