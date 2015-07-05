@@ -2,11 +2,12 @@
 //only extend results when there the box is checked,
 //add a box for blueray / dvd
 //setup a server to recieve title, year, tmdbid, and imdbid
+var globalData = [];
 
 var activeResult = 0;
 
 var saveMovie = function(data){
-	var url = "http://kenvideo.net/kvmdb/api/add_movie/";
+	var url = "http://kenvideo.net/kvmdb/api/movies/new/";
 
 	$.ajax({
 	  type: "POST",
@@ -15,7 +16,25 @@ var saveMovie = function(data){
 	}).done(function(d){
 		console.log('saved it');
 		console.log(d);
+		globalData.push(data);
+		$('#tmdbid_'+data.tmdb_id).removeClass('needsLogged');
 	});
+}
+
+function updateQuantity(data){
+	var url = "http://kenvideo.net/kvmdb/api/movies/update/";
+
+	$.ajax({
+	  type: "POST",
+	  url: url,
+	  data: data
+	}).done(function(d){
+		console.log('updated it it');
+		console.log(d);
+		globalData.push(data);
+		$('#tmdbid_'+data.tmdb_id).removeClass('needsLogged');
+	});
+
 }
 
 var newOMDBResult = function(d){
@@ -70,8 +89,28 @@ var newTMDBResult = function(d) {
 	var next = next_tmpl(d);
 	$('#nav').append(next);
 
+	highlightExisting();
+
 	resetListeners();
 
+}
+
+function highlightExisting() {
+	$('.result').each(function(){
+		$this = $(this);
+		var tmdb_id_this = $(this).attr('id').split('_')[1];
+		if(inOurData(tmdb_id_this)) {
+			var ours = ourVersion(tmdb_id_this);
+
+			var $counter1 = $this.find('.dvdcount');
+			var $counter2 = $this.find('.blucount');
+
+			$counter1.text(ours.dvd);
+			$counter2.text(ours.blu);
+
+			$this.addClass('owned');
+		}
+	});
 }
 
 var extendResult = function(data) {
@@ -86,11 +125,6 @@ var extendResult = function(data) {
 }
 
 function resetListeners(){
-	// $('.result').click(function(){
-	// 	var tmdbid = $(this).attr('id').split('_')[1];
-	// 	console.log(tmdbid);
-	// 	theMovieDb.movies.getById({"id":tmdbid }, extendResult, errorCB);
-	// });
 
 	$('#next').click(function(){
 		var thePage = $(this).data('page') + 1;
@@ -115,7 +149,6 @@ function resetListeners(){
 		locateIMDBID($(this).data('result'));
 	});
 	$('.activated').keyup(function(e){
-		//console.log(e.which);
 		var currentResult = parseInt($(this).data('result'));
 
 		if(e.which == 40) {
@@ -139,11 +172,6 @@ function resetListeners(){
 
 	});
 
-	$('.clearout').click(function(){
-		var currentResult = $(this).data('result');
-		clearout(currentResult);
-	})
-
 
 }
 
@@ -165,6 +193,17 @@ function locateIMDBID(result){
 
 }
 
+function inOurData(tmdb_id){
+	var logged = _.where(globalData, {'tmdb_id':tmdb_id});
+	return logged.length > 0;
+
+}
+
+function ourVersion(tmdb_id){
+	var logged = _.where(globalData, {'tmdb_id':tmdb_id});
+	return logged[0];
+}
+
 function saveThisResult(result){
 	var $result = $($('[data-resultRow="'+result+'"]')[0]);
 	var data = {};
@@ -172,7 +211,7 @@ function saveThisResult(result){
 	data.dvd = $result.find('.dvdcount').text();
 	data.blu = $result.find('.blucount').text();
 	data.title = $result.find('.title').text();
-	data.tmdbid = $result.find('.tmdbid').text();
+	data.tmdb_id = $result.find('.tmdbid').text();
 
 	if(data.dvd == '') {
 		data.dvd = '0';
@@ -181,20 +220,30 @@ function saveThisResult(result){
 		data.blu = '0';
 	}
 
-	if(data.blu == '0' && data.dvd == '0') {
-		console.log('nothing to log');
+	if($result.hasClass('needsLogged')){
+		if(inOurData(data.tmdb_id)){
+			console.log('we are going to do an update');
+			updateQuantity(data);
+		} else {
+			if(data.blu == '0' && data.dvd == '0') {
+				console.log('nothing to log');
+			} else {
+				console.log('sending:');
+				console.log(data);
+				saveMovie(data);
+				$result.addClass('owned');
+			}
+		}
 	} else {
-		console.log('sending:');
-		console.log(data);
+		console.log('nothing changed');
 	}
-
-
 
 }
 
 function clearout(currentResult) {
 	console.log(currentResult);
 	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
+	$result.addClass('needsLogged');
 
 	var $counter1 = $result.find('.dvdcount');
 	$counter1.addClass('clearedOut');
@@ -208,10 +257,22 @@ function clearout(currentResult) {
 	$counter1.text(0);
 	$counter2.text(0);
 
+	var data = {};
+	data.imdb_id = $result.data('imdbid');
+	data.dvd = $result.find('.dvdcount').text();
+	data.blu = $result.find('.blucount').text();
+	data.title = $result.find('.title').text();
+	data.tmdb_id = $result.find('.tmdbid').text();
+
+	updateQuantity(data);
+
+
+
 }
 
 function logDVD(currentResult){
 	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
+	$result.addClass('needsLogged');
 
 	var $counter = $result.find('.dvdcount');
 	$counter.addClass('plusOne');
@@ -224,7 +285,8 @@ function logDVD(currentResult){
 }
 
 function logBLU(currentResult){
-	var $result = $($('[data-resultRow="'+currentResult+'"]')[0])
+	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
+	$result.addClass('needsLogged');
 
 	var $counter = $result.find('.blucount');
 	$counter.addClass('plusOne');
@@ -333,31 +395,111 @@ function searchTMDB(searchString, year, page) {
   	// });
   }
 
+function syncWithServer(){
+	$.ajax({
+	  type: "GET",
+	  url: 'http://kenvideo.net/kvmdb/api/movies/all/'
+	}).done(function(d){
+		console.log('synced it');
+		d = $.parseJSON(d);
+		console.log(d);
+		globalData = d;
+
+	});
+}
+
+function showManualForm() {
+	$('.cantFindItHelper').show();
+	$('.cantFindItHint').hide();
+}
+
+function hideManualForm($this) {
+
+	$this.text('saving... ');
+	$this.attr('disabled','disabled');
+
+	var data = {};
+	data.blu = $('#blu').val();
+	data.dvd = $('#dvd').val();
+	data.year = $('#yearbox').val();
+	data.director = $('#director').val();
+	data.upc = $('#upc').val();
+	data.notes = $('#notes').val();
+	data.title = $('#searchbox').val();
+
+
+	function resetForm() {
+		$('.cantFindItHelper').hide();
+		$('.cantFindItHint').show();
+		$this.text('Save For Later');
+		$this.attr('disabled',false);
+		$('#searchbox').val('');
+		$('#searchbox').focus();
+
+		$('#blu').val('');
+		$('#dvd').val('');
+		$('#yearbox').val('');
+		$('#director').val('');
+		$('#upc').val('');
+		$('#notes').val('');
+		$('#searchbox').val('');
+
+	}
+
+	if(data.title) {
+		console.log('going to save it for later');
+		console.log(data);
+
+		var url = "http://kenvideo.net/kvmdb/api/movies/later/";
+
+		$.ajax({
+		  type: "POST",
+		  url: url,
+		  data: data
+		}).done(function(d){
+			console.log('saved it for later');
+		}).fail(function(d){
+			console.error('that was a major fail');
+		}).always(function(d){
+			resetForm();
+		});
+
+	} else {
+		resetForm();
+	}
+
+
+
+
+
+}
+
 $(document).ready(function(){
+
+	syncWithServer();
 	theMovieDb.common.api_key = "0489233d5a64e99ec2d3789a8f513c96";
 
-	//doSearch('Fight Club');
+	$('#cantFindIt').mousedown(function(){
+		showManualForm();
+	});
 
-	// $('#searchform').submit(function(e){
-	// 	e.preventDefault();
-	// 	var query = $(this).find('#searchbox').val();
-	// 	//var year = $(this).find('#yearbox').val();
-	// 	year = '';
-	// 	doSearch(query, year);
-	// });
+	$('#findItLater').mousedown(function(){
+		hideManualForm($(this));
+	});
+
 
 	$('#searchbox').keyup(function(e){
 		console.log(e.which); //down = 40,Right: 39,Left: 37,Esc: 27,Up: 38
 		//Enter: 13
-// Up: 38
-// Down: 40
-// Right: 39
-// Left: 37
-// Esc: 27
-// SpaceBar: 32
-// Ctrl: 17
-// Alt: 18
-// Shift: 16
+		// Up: 38
+		// Down: 40
+		// Right: 39
+		// Left: 37
+		// Esc: 27
+		// SpaceBar: 32
+		// Ctrl: 17
+		// Alt: 18
+		// Shift: 16
 
 		if(e.which == 40) {
 			console.log('youpressed down');

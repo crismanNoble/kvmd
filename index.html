@@ -19,10 +19,11 @@
 	<script id="result-tmdb" type="text/x-handlebars-template">
 		{{#each results}}
 			<tr class="result" id="tmdbid_{{id}}" data-resultRow="{{@index}}">
-				<td class="activator"><input type="text" id="result_{{@index}}" class="activated" data-result="{{@index}}"></input></td>
+
 				<td class="counter">dvd<span class="count dvdcount">0</span>blu<span class="count blucount">0</span>
-				<button class="clearout" data-result="{{@index}}">clear</button>
+				<!--<button class="clearout" data-result="{{@index}}">clear</button>-->
 				</td>
+				<td class="activator"><input type="text" id="result_{{@index}}" class="activated" data-result="{{@index}}"></input></td>
 				<td class="year"><p>{{year}}</p></td>
 		    <td class="title"><p>{{title}}</p></td>
 		    <td class="overview"><p>{{overview}}</p></td>
@@ -79,7 +80,7 @@
 			}
 
 			.counter {
-				width: 170px;
+				width: 104px;
 			}
 			.year {
 				width: 40px;
@@ -89,6 +90,10 @@
 				padding: 0 5px;
 				border-right: 1px solid black;
 				margin-right: 5px;
+			}
+			.count:last-of-type {
+				border-right: none;
+				margin-right: 0;
 			}
 
 			.count {
@@ -107,7 +112,7 @@
 				content: "blah";
 				display: inline-block;
 				background: white;
-				border: white;
+				border: 1px solid #ddd;
 				color: white;
 				height: 15px;
 				width: 15px;
@@ -130,6 +135,16 @@
 			.activatedRightNow {
 				background-color: #f2f2f2;
 			}
+			.owned {
+				color: #999;
+			}
+			.cantFindItHelper {
+				display: none;
+
+			}
+			input.cantFindItHelper {
+				width: 100px;
+			}
 
 	</style>
 
@@ -138,8 +153,14 @@
 
 <form id="searchform">
 <input type="text" id="searchbox" placeholder="title"/>
-<!-- <input type="text" id="yearbox" placeholder="year (optional)"/> -->
-<!-- <input type="submit" id="sumbittheform"> -->
+<input type="text" id="yearbox" placeholder="year" class="cantFindItHelper"/>
+<input type="text" id="director" placeholder="director" class="cantFindItHelper"/>
+<input type="text" id="upc" placeholder="upc" class="cantFindItHelper"/>
+<input type="text" id="notes" placeholder="notes..." class="cantFindItHelper"/>
+<input type="text" id="dvd" placeholder="dvds" class="cantFindItHelper"/>
+<input type="text" id="blu" placeholder="blu" class="cantFindItHelper"/>
+<button id="cantFindIt" class="cantFindItHint">Can't Find It?</button>
+<button id="findItLater" class="cantFindItHelper">Save For Later</button>
 </form>
 
 <div id="loading" style="display:none">loading...</div>
@@ -148,8 +169,9 @@
 
 <table id="results" style="display:none">
 	<tr>
-		<th></th>
+
 		<th>Own?</th>
+		<th></th>
 		<th>Year</th>
 		<th>Title</th>
 		<th>plot</th>
