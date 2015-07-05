@@ -488,7 +488,10 @@ $(document).ready(function(){
 	});
 
 
+
+	var searchInProgress = false;
 	$('#searchbox').keyup(function(e){
+		e.preventDefault();
 		console.log(e.which); //down = 40,Right: 39,Left: 37,Esc: 27,Up: 38
 		//Enter: 13
 		// Up: 38
@@ -500,16 +503,36 @@ $(document).ready(function(){
 		// Ctrl: 17
 		// Alt: 18
 		// Shift: 16
-
-		if(e.which == 40) {
-			console.log('youpressed down');
-			activateNextResult();
-		} else {
-			var query = $(this).val();
-			//var year = $(this).find('#yearbox').val();
-			var year ='';
+		var query = $(this).val();
+		var year ='';
+		if(e.which == 13) {
 			doSearch(query, year);
+			console.log('you hit enter');
+			console.log('doing the search for sure');
+		} else {
+			if(e.which == 40) {
+				console.log('youpressed down');
+				activateNextResult();
+			} else {
+				if(!searchInProgress){
+					if(query.length > 1){
+						doSearch(query, year);
+						searchInProgress = true;
+						setTimeout(function(){
+							console.log('searchReset');
+							searchInProgress = false;
+						},200);
+					}
+
+
+				} else {
+					console.log('too soon');
+				}
+
+			}
 		}
+
+
 
 
 	});
