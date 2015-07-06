@@ -4,7 +4,7 @@ var totalLogged = 0;
 function syncWithServer(){
 	$.ajax({
 	  type: "GET",
-	  url: 'http://kenvideo.net/kvmdb/api/movies/all/'
+	  url: 'http://kovalent.co/clients/kenvideo/kvmdb/api/movies/all/'
 	}).done(function(d){
 		console.log('synced it');
 		d = $.parseJSON(d);
@@ -16,7 +16,7 @@ function syncWithServer(){
 }
 
 var saveMovie = function(data){
-	var url = "http://kenvideo.net/kvmdb/api/movies/new/";
+	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/new/";
 
 	console.log('datato be saved');
 	console.log(data);

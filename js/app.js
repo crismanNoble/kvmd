@@ -7,7 +7,7 @@ var globalData = [];
 var activeResult = 0;
 
 var saveMovie = function(data){
-	var url = "http://kenvideo.net/kvmdb/api/movies/new/";
+	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/new/";
 
 	$.ajax({
 	  type: "POST",
@@ -22,7 +22,7 @@ var saveMovie = function(data){
 }
 
 function updateQuantity(data){
-	var url = "http://kenvideo.net/kvmdb/api/movies/update/";
+	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/update/";
 
 	$.ajax({
 	  type: "POST",
@@ -398,7 +398,7 @@ function searchTMDB(searchString, year, page) {
 function syncWithServer(){
 	$.ajax({
 	  type: "GET",
-	  url: 'http://kenvideo.net/kvmdb/api/movies/all/'
+	  url: 'http://kovalent.co/clients/kenvideo/kvmdb/api/movies/all/'
 	}).done(function(d){
 		console.log('synced it');
 		d = $.parseJSON(d);
@@ -450,7 +450,7 @@ function hideManualForm($this) {
 		console.log('going to save it for later');
 		console.log(data);
 
-		var url = "http://kenvideo.net/kvmdb/api/movies/later/";
+		var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/later/";
 
 		$.ajax({
 		  type: "POST",
