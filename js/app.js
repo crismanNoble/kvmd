@@ -537,6 +537,11 @@ $(document).ready(function(){
 
 	});
 
+	$('#helpToggle').click(function(e){
+		e.preventDefault();
+		$('#helpme').toggle();
+	});
+
 });
 
 Handlebars.registerHelper('greaterThan', function(first, second, options) {

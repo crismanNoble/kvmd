@@ -1,0 +1,135 @@
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<script src="js/jquery.js"></script>
+	<script src="js/underscore.js"></script>
+	<script src="js/handlebars.js"></script>
+	<script src="js/tmdb.js"></script>
+
+	<script src="js/theseeds.js"></script>
+
+	<script id="result-gdocs" type="text/x-handlebars-template">
+		{{#each seeds}}
+	  <div class="entry{{#if logged}} resultLogged{{/if}}" data-entry="{{@index}}" {{#if tmdbid}}data-tmdbid={{tmdbid}}{{/if}}>
+	  		<div class="quantity cell">
+		    	<span class="dvd">{{dvd}}</span>/<span class="blu">{{blu}}</span>
+		    </div>
+	  		<div class="title cell">
+	  			<input type="text" value="{{title}}" class="title-input"/>
+	  		</div>
+	  		<div class="more cell">
+		    	<input type="text" value="{{more}}" class="more-input"/>
+		    </div>
+
+		    <div class="matches cell">{{hits}}</div>
+
+		    <div class="results" data-results="{{@index}}"></div>
+
+		 </div>
+
+		{{/each}}
+	</script>
+	<script id="result-tmdb" type="text/x-handlebars-template">
+		{{#each results}}
+	  <div class="result-row" data-result="{{id}}">
+	  		<div class="pick-me cell">
+		    	<button class="picker" data-tmdb="{{id}}">pick me</button>
+		    </div>
+	  		<div class="result-year cell">
+		    	<span class="">{{year}}</span>
+		    </div>
+	  		<div class="result-title cell">
+	  			<span class="">{{title}}</span>
+	  		</div>
+	  		<div class="overview cell">
+	  			<span class="">{{overview}}</span>
+	  		</div>
+
+		 </div>
+
+		{{/each}}
+	</script>
+	<script src="js/app2.js"></script>
+
+	<style>
+	* {
+		font-family: monospace;
+	}
+	th {
+		text-align: left;
+	}
+	.title p{
+		max-width: 300px;
+		max-height: 1em;
+		overflow-x: scroll;
+	}
+	.activated {
+		background: #f0f0f0;
+	}
+	.title input {
+		width: 300px;
+	}
+	.cell {
+		float: left;
+		padding-right: 20px;
+	}
+	.entry {
+		overflow: auto;
+		min-width: 1000px;
+		padding-top: 10px;
+	}
+	.quantity {
+		width: 20px;
+	}
+	.more input {
+		width: 50px;
+	}
+	.matches {
+		width: 40px;
+
+	}
+	.results {
+		width: 100%;
+		clear: both;
+		padding: 10px;
+		overflow: auto;
+	}
+	.result-row {
+		width: 100%;
+		float: none;
+		clear: both;
+		overflow: auto;
+	}
+	.overview {
+		max-width: 50em;
+	}
+	.result-title {
+		font-weight: bold;
+	}
+	.resultLogged {
+		display: none;
+	}
+	</style>
+
+</head>
+<body>
+
+<div id="initialMsg"><input type="checkbox" id="showLogged"/>Show Logged? Total Logged: <span id="totalLogged">0</span></div>
+
+<table id="results">
+	<tr>
+		<th></th>
+		<th>title</th>
+		<th>more</th>
+
+		<th>matches</th>
+	</tr>
+</table>
+<div id="nav"></div>
+<table id="omdb" class="resultSet">
+</table>
+<table id="tmdb" class="resultSet">
+</table>
+
+</body>
