@@ -12,7 +12,7 @@
 	<script id="result-titles" type="text/x-handlebars-template">
 		{{#each titles}}
 
-	 		<div data-index="{{index}}" class="row">
+	 		<div data-index="{{index}}" data-tmdb="{{tmdb_id}}" class="row {{dataQuality imdb_id year}}">
 
 		    <div class="year cell">
 		    	{{#equalTo year 0}}
@@ -21,14 +21,14 @@
 		    	<p class="content">{{year}}</p>
 		    	{{/equalTo}}
 	  		</div>
-	  		<div class="year cell">
+	  		<div class="title cell">
 		    	<p class="content">{{title}}</p>
 	  		</div>
 	  		<div class="tmdb cell">
 		    	<a href="https://www.themoviedb.org/movie/{{tmdb_id}}" target="_blank">{{tmdb_id}}</a>
 	  		</div>
 	  		<div class="imdb cell">
-		    	{{imdb_id}}
+		    	<a href="http://www.imdb.com/title/{{imdb_id}}/" target="_blank">{{imdb_id}}</a>
 	  		</div>
 
 	  		<!--<div class="quantity cell">
@@ -45,7 +45,7 @@
 		    </div>
 		    <div class="tools cell">
 	 				<button class="killit tool" data-action="remove" data-index="{{index}}">remove</button>
-	 			</div> -->
+	 			</div>-->
 
 			</div>
 
@@ -81,17 +81,17 @@
 </head>
 <body>
 <h1>Titles (<span id="count">...</span>)</h1>
+<p> sort by: <a href="#" class="sorter" data-sortby="entered">entered</a> <a href="#" class="sorter" data-sortby="year">year</a> <a href="#" class="sorter" data-sortby="title">title</a> show only: <a href="#" class="filter" data-filterby="missing">missing data</a> <a href="#" class="filter" data-filterby="duplicates">duplicates</a> <a href="#" class="filter" data-filterby="zero">zero quantity</a>
+<br/><br/>
+</p>
 <div id="titles"></div>
 
 <div>
 todo:
-show most recent first
-go through and save year and imdb of everything
-updates need to support modifying more than just quantity
+
 need to have a delete too
 wire up updates
 wire up remove, with alert
-highlight duplicates / zero quantites
 make quantity modifier better
 </div>
 </body>

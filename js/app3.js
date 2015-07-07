@@ -8,18 +8,18 @@ function syncWithServer(){
 	}).done(function(d){
 		console.log('synced it');
 		d = $.parseJSON(d);
-		console.log(d);
+		//console.log(d);
+		globalData = d;
+		d = sortOrFilter(d,'sort','entered');
 		showCurrentTitles(d);
+
 
 	});
 }
 
-function showCurrentTitles(titles) {
+function showCurrentTitles(titles,sortFilter) {
 	$('#titles').html('');
-	titles = _.sortBy(titles,function(d){
-		return -d.index;
-	});
-	globalData = titles;
+
 	var d = {'titles':titles};
 	var results   = $("#result-titles").html();
 	var results_tmpl = Handlebars.compile(results);
@@ -30,28 +30,153 @@ function showCurrentTitles(titles) {
 	$('#count').text(d.titles.length);
 }
 
-function sortBy(what, data){
-	if(!data){
-		data = globalData;
+function sortOrFilter(data,sortOrFilter,byWhat){
+	console.log(sortOrFilter);
+	console.log(byWhat);
+	if(sortOrFilter == 'sort') {
+		if(byWhat == 'entered') {
+			data = _.sortBy(data,function(d,i){
+				return -d.index;
+			});
+		}
+		if(byWhat == 'title') {
+			data = _.sortBy(data,'title');
+		}
+		if(byWhat == 'year') {
+			data = _.sortBy(data,'year');
+		}
 	}
-	if(what == 'title') {
-		data = _.sortBy(data,'title');
+
+	if(sortOrFilter == 'filter') {
+		if(byWhat == 'missing') {
+			data = _.filter(data,function(d,i){
+				return d.imdb_id == '' || d.year == 0;
+			});
+		}
+		if(byWhat == 'duplicates') {
+			var the_data = _.pluck(globalData, 'tmdb_id');
+			console.log(the_data);
+			data = _.filter(data,function(d,i){
+				var this_tmdb = d.tmdb_id;
+
+				var count = _.filter(the_data, function(num){
+					return num == this_tmdb;
+				});
+
+				console.log(this_tmdb);
+				console.log(count);
+				//var count = [];
+				return count.length > 1;
+			});
+			data = _.sortBy(data,'tmdb_id');
+		}
+		if(byWhat == 'zero') {
+			data = _.filter(data,function(d,i){
+				return d.dvd == 0 && d.blu == 0;
+			});
+		}
 	}
+
 	return data;
 }
 
 
 function initialListeners(){
 
+
+
 }
 function resetListeners() {
 
 }
 
+function crawlDown() {
+	var count = 0;
+	var $rows = $('.row');
+
+	var intervalID = setInterval(function(){
+		if(count < globalData.length) {
+			$this = $($rows[count]);
+			var tmdb_id = $this.find('.tmdb').text().trim();
+			if($this.find('.imdb').text().trim() == '' || $this.find('.year').text().trim() == '????'){
+				hitAPI(tmdb_id);
+			}
+			count ++;
+		}	else {
+			clearInterval(intervalID);
+		}
+	}, 500);
+
+}
+
+function hitAPI(tmdb_id) {
+
+	theMovieDb.movies.getById({"id":tmdb_id },apiSuccess,apiError);
+
+	function apiError(d){
+		console.log('error');
+		console.log(d);
+	}
+
+	function apiSuccess(d){
+		d = $.parseJSON(d);
+		console.log(d);
+		writeResults(tmdb_id,d);
+	}
+
+}
+
+function writeResults(tmdb_id,d){
+	$target = $('[data-tmdb="'+tmdb_id+'"]');
+	var year = d.release_date.split('-')[0];
+	var imdb_id = d.imdb_id;
+	$target.find('.year .content').text(year);
+	$target.find('.imdb').html('<a href="http://www.imdb.com/title/'+imdb_id+'/" target="_blank">'+imdb_id+'</a>');
+
+	var data = {'tmdb_id':tmdb_id};
+	if(year){
+		data.year = year;
+	}
+	if(imdb_id) {
+		data.imdb_id = imdb_id;
+	}
+	if(imdb_id || year) {
+		updateData(data);
+	}
+}
+
+function updateData(data){
+	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/update/";
+
+	console.log(data);
+
+	$.ajax({
+	  type: "POST",
+	  url: url,
+	  data: data
+	}).done(function(d){
+		console.log('updated it it');
+	});
+}
 
 $(document).ready(function(){
 
 	syncWithServer();
+
+
+	$('.sorter').click(function(e){
+		e.preventDefault();
+		var titles = sortOrFilter(globalData,'sort',$(this).data('sortby'));
+		showCurrentTitles(titles);
+
+	});
+
+	$('.filter').click(function(e){
+		e.preventDefault();
+		var titles = sortOrFilter(globalData,'filter',$(this).data('filterby'));
+		console.log(titles);
+		showCurrentTitles(titles);
+	});
 
 
 });
@@ -70,5 +195,16 @@ Handlebars.registerHelper('equalTo', function(first, second, options) {
   } else {
     return options.inverse(this);
   }
+});
+
+Handlebars.registerHelper('dataQuality', function(imdb_id, year) {
+  var classes = [];
+  if(imdb_id == '') {
+  	classes.push('missingIMDB');
+  }
+  if(year == 0) {
+  	classes.push('missingYear');
+  }
+  return classes.join(' ');
 });
 
