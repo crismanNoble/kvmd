@@ -16,7 +16,9 @@ function syncWithServer(){
 
 function showCurrentTitles(titles) {
 	$('#titles').html('');
-	titles = _.sortBy(titles,'title');
+	titles = _.sortBy(titles,function(d){
+		return -d.index;
+	});
 	globalData = titles;
 	var d = {'titles':titles};
 	var results   = $("#result-titles").html();
