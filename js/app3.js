@@ -17,6 +17,7 @@ function syncWithServer(){
 	});
 }
 
+
 function showCurrentTitles(titles,sortFilter) {
 	$('#titles').html('');
 
@@ -25,7 +26,7 @@ function showCurrentTitles(titles,sortFilter) {
 	var results_tmpl = Handlebars.compile(results);
 	var titles = results_tmpl(d);
 	$('#titles').append(titles);
-	initialListeners();
+	resetListeners();
 
 	$('#count').text(d.titles.length);
 }
@@ -87,7 +88,45 @@ function initialListeners(){
 
 }
 function resetListeners() {
+	$('.killit').click(function(e){
+		e.preventDefault();
 
+		var who = $(this).data('index');
+		console.log(who);
+		removeEntry(who);
+	});
+
+	$('[data-action="update"]').click(function(e){
+		e.preventDefault();
+
+		var who = $(this).data('index');
+		var what = $(this).data('value');
+		var where = $(this).data('modifier');
+		var howmuch = parseInt($(this).parent().find('.'+what+'').text().trim());
+
+		if(where == 'add') {
+			howmuch++;
+		} else {
+			howmuch --;
+		}
+
+		if(howmuch >= 0) {
+			console.log(who);
+			console.log(howmuch);
+			console.log(what);
+
+			$(this).parent().find('.'+what+'').text(howmuch);
+
+			var blu = $(this).parent().parent().find('.blu').text();
+			var dvd = $(this).parent().parent().find('.dvd').text();
+			var tmdb_id = $(this).parent().parent().data('tmdb');
+			var all = {'blu':blu,'dvd':dvd,'tmdb_id':tmdb_id};
+
+			updateData(all);
+
+		}
+
+	});
 }
 
 function crawlDown() {
@@ -156,6 +195,22 @@ function updateData(data){
 	  data: data
 	}).done(function(d){
 		console.log('updated it it');
+	});
+}
+
+
+function removeEntry(who){
+
+	var data= {'index':who};
+	console.log('going to remove');
+	console.log(data);
+	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/remove/";
+	$.ajax({
+	  type: "POST",
+	  url: url,
+	  data: data
+	}).done(function(d){
+		console.log('removed it');
 	});
 }
 
