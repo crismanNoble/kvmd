@@ -211,6 +211,7 @@ function saveThisResult(result){
 	data.dvd = $result.find('.dvdcount').text();
 	data.blu = $result.find('.blucount').text();
 	data.title = $result.find('.title').text();
+	data.year = $result.find('.year').text();
 	data.tmdb_id = $result.find('.tmdbid').text();
 
 	if(data.dvd == '') {

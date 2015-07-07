@@ -15,13 +15,20 @@
 	 		<div data-index="{{index}}" class="row">
 
 		    <div class="year cell">
+		    	{{#equalTo year 0}}
+					<p class="content">????</p>
+		    	{{else}}
 		    	<p class="content">{{year}}</p>
+		    	{{/equalTo}}
 	  		</div>
 	  		<div class="year cell">
 		    	<p class="content">{{title}}</p>
 	  		</div>
 	  		<div class="tmdb cell">
 		    	<a href="https://www.themoviedb.org/movie/{{tmdb_id}}" target="_blank">{{tmdb_id}}</a>
+	  		</div>
+	  		<div class="imdb cell">
+		    	{{imdb_id}}
 	  		</div>
 
 	  		<!--<div class="quantity cell">

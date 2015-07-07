@@ -266,20 +266,19 @@ function resetListeners() {
 	$('.picker').click(function(){
 		var tmdb = $(this).data('tmdb');
 		var title = $(this).parent().parent().find('.result-title').text().trim();
+		var year = $(this).parent().parent().find('.result-year').text().trim();
 		var entry = $(this).parent().parent().parent().parent().data('entry');
 
 		console.log(entry);
 		console.log(title);
 		console.log(tmdb);
 
-		logResult(entry,title,tmdb);
+		logResult(entry,title,tmdb,year);
 	});
-
-
 
 }
 
-function logResult(entry,title,tmdb){
+function logResult(entry,title,tmdb,year){
 	$parent = $('[data-entry="'+entry+'"');
 	$parent.addClass('resultLogged');
 	var oldTitle = $parent.find('.title-input').val();
@@ -297,6 +296,7 @@ function logResult(entry,title,tmdb){
 
 	var data = {};
 	data.title = title;
+	data.year = year;
 	data.dvd = $parent.find('.dvd').text() || '0';
 	data.blu = $parent.find('.blu').text() || '0';
 	data.tmdb_id = tmdb.toString();
