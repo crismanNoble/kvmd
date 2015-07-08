@@ -202,6 +202,15 @@ function updateData(data){
 function removeEntry(who){
 
 	var data= {'index':who};
+
+	var $who = $('[data-index="'+who+'"]');
+	data.year = $who.find('.year .content').text();
+	data.title = $who.find('.title .content').text();
+	data.imdb_id = $who.find('.tmdb').text();
+	data.tmdb_id = $who.find('.tmdb').text();
+	data.blu = $who.find('.blu').text();
+	data.dvd = $who.find('.dvd').text();
+
 	console.log('going to remove');
 	console.log(data);
 	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/remove/";
@@ -211,6 +220,7 @@ function removeEntry(who){
 	  data: data
 	}).done(function(d){
 		console.log('removed it');
+		$who.remove();
 	});
 }
 
