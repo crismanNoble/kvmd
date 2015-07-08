@@ -204,12 +204,12 @@ function removeEntry(who){
 	var data= {'index':who};
 
 	var $who = $('[data-index="'+who+'"]');
-	data.year = $who.find('.year .content').text();
-	data.title = $who.find('.title .content').text();
-	data.imdb_id = $who.find('.tmdb').text();
-	data.tmdb_id = $who.find('.tmdb').text();
-	data.blu = $who.find('.blu').text();
-	data.dvd = $who.find('.dvd').text();
+	data.year = $who.find('.year .content').text().trim();
+	data.title = $who.find('.title .content').text().trim();
+	data.imdb_id = $who.find('.tmdb').text().trim();
+	data.tmdb_id = $who.find('.tmdb').text().trim();
+	data.blu = $who.find('.blu').text().trim();
+	data.dvd = $who.find('.dvd').text().trim();
 
 	console.log('going to remove');
 	console.log(data);
