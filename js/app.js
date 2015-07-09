@@ -427,6 +427,11 @@ function hideManualForm($this) {
 	data.upc = $('#upc').val();
 	data.notes = $('#notes').val();
 	data.title = $('#searchbox').val();
+	if($('#tv').is(':checked')) {
+		data.tv = '1';
+	} else {
+		data.tv = '0';
+	}
 
 
 	function resetForm() {
@@ -443,6 +448,7 @@ function hideManualForm($this) {
 		$('#director').val('');
 		$('#upc').val('');
 		$('#notes').val('');
+		$('#tv').attr('checked', false);
 		$('#searchbox').val('');
 
 	}
