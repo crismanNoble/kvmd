@@ -10,8 +10,8 @@ function syncWithServer(){
 		d = $.parseJSON(d);
 		console.log(d);
 		globalData = d;
+		//fetchSeeds();
 		showGoogleDocsInputs();
-
 	});
 }
 
@@ -28,6 +28,38 @@ var saveMovie = function(data){
 	}).done(function(d){
 		console.log('saved it');
 		console.log(d);
+	});
+}
+
+function fetchSeeds(){
+	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/seeds/all/";
+
+	$.ajax({
+	  type: "POST",
+	  url: url,
+	  data: input
+	}).done(function(output){
+		output = $.parseJSON(output);
+		console.log('theseeds are:');
+		console.log(output);
+
+		seeds = output
+
+		showGoogleDocsInputs();
+	});
+
+
+}
+
+function addSeed(input){
+	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/seeds/add/";
+
+	$.ajax({
+	  type: "POST",
+	  url: url,
+	  data: input
+	}).done(function(output){
+		console.log('added to the seeds');
 	});
 }
 
@@ -100,6 +132,7 @@ function dataString() {
 	return JSON.stringify(seeds);
 }
 function showGoogleDocsInputs() {
+
 	seeds = _.map(seeds,function(d,i){
 		if(d.tmdbid){
 			if(inOurData(d.tmdbid)){
@@ -109,13 +142,7 @@ function showGoogleDocsInputs() {
 		}
 		return d;
 	});
-	seeds = _.sortBy(seeds,function(d){
-		var theComparator = parseInt(d.hits);
-		if(d.hits == 0) {
-			theComparator = 1.1;
-		}
-		return theComparator - 1;
-	});
+	seeds = _.sortBy(seeds,'title');
 	var d = {'seeds':seeds};
 	var result   = $("#result-gdocs").html();
 	var result_templ = Handlebars.compile(result);
@@ -125,22 +152,67 @@ function showGoogleDocsInputs() {
 	$('#totalLogged').text(totalLogged);
 }
 activeResult = null;
+
+function extractDataFromResult($target) {
+	var data = {};
+	data.logged = $target.hasClass('resultLogged');
+	data.tmdb_id = $target.data('tmdbid');
+	data.dvd = $target.find('.dvd').text().trim() || '0';
+	data.blu = $target.find('.blu').text().trim();
+	data.details = $target.find('.more-input').val().trim();
+	data.title = $target.find('.title-input').val().trim();
+	data.tmdb_matches = $target.find('.matches').text().trim();
+
+	if(data.tmdb_id) {
+		data.tmdb_id = data.tmdb_id.toString();
+	} else {
+		data.tmdb_id = ''
+	}
+	if(data.tmdb_matches == '') {
+		data.tmdb_matches = '0';
+	}
+
+	if(data.dvd == '') {
+		data.dvd = '0';
+	}
+
+	if(data.blu == '') {
+		data.blu = '0';
+	}
+
+	if(data.logged) {
+		data.logged = '1';
+	} else {
+		data.logged = '0';
+	}
+
+	return data;
+}
 function activateResult(iterator,force) {
+
+	console.log('active result' + activeResult + 'activated' + iterator);
 
 	var newResult = 0;
 	if(_.isNull(activeResult)){
-		newResult = 0;
+		activeResult = 0;
 	} else {
 		newResult = activeResult + iterator;
+
 	}
 	if(force || force === 0) {
 		newResult = force;
 	}
 	if(newResult >= 0 && newResult < seeds.length){
 		var $target = $('[data-entry="'+newResult+'"]');
-		if($target.hasClass('resultLogged') || false){
+
+		if($target.hasClass('resultLogged') || true){ //was || false
 			//todo: how to skep ahead??
 			//activateResult(1);
+
+			var seed = extractDataFromResult($target);
+			console.log(seed);
+			addSeed(seed);
+
 		} else {
 			$('.entry').removeClass('activated');
 			$('.results').hide();
@@ -157,7 +229,9 @@ function activateResult(iterator,force) {
 		}
 
 
+		activeResult = newResult;
 	}
+
 }
 function hitAPI($target) {
 	console.log($target);
@@ -321,7 +395,7 @@ $(document).ready(function(){
 	syncWithServer();
 
 	var theTimeout = setInterval(function(){
-		//activateResult(1);
+		activateResult(1);
 	},1000);
 
 	$('#showLogged').click(function(){
@@ -361,9 +435,9 @@ $(document).ready(function(){
 		// if(e.which == 68) {
 		// 	console.log('right');
 		// }
-		// if(e.which == 27) {
-		// 	clearTimeout(theTimeout);
-		// }
+		if(e.which == 27) {
+			clearTimeout(theTimeout);
+		}
 	});
 
 });
