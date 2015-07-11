@@ -1,0 +1,52 @@
+
+* {
+	font-family: monospace;
+}
+p, h1, h2, h3,h4 {
+	margin: 0;
+}
+
+.row {
+	padding: 2px;
+	border-top: 1px solid black;
+	overflow: auto;
+}
+
+.cell {
+	padding: 0 5px;
+	float: left;
+}
+
+.activator {
+	width: 15px;
+	height: 15px;
+	padding: 0;
+	background-color: #e9e9e9;
+	transition: all .2s linear;
+}
+
+.active {
+	background-color: purple;
+}
+
+.rowThing, .extendedResults {
+	width: 100%;
+	overflow: auto;
+}
+
+.rowThing {
+	padding: 2px;
+}
+
+.newCopy.formatType, .formatEditor {
+  width: 52px;
+
+}
+.newCopy.formatType {
+  margin-left: 8px;
+}
+
+
+.editionEditor {
+	width: 200px;
+}

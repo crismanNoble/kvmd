@@ -26,7 +26,7 @@ function showCurrentTitles(titles,sortFilter) {
 	var results_tmpl = Handlebars.compile(results);
 	var titles = results_tmpl(d);
 	$('#titles').append(titles);
-	resetListeners();
+	initialListeners();
 
 	$('#count').text(d.titles.length);
 }
@@ -81,13 +81,124 @@ function sortOrFilter(data,sortOrFilter,byWhat){
 	return data;
 }
 
+function activate($who) {
+	$('.extendedResults').html('');
+	$('.activator').removeClass('active');
+	$('.extendedResults').hide();
+	$who.find('.activator').addClass('active');
 
-function initialListeners(){
+	var $copies = $who.find('.extendedResults');
+	var index = $who.data('index').toString();
 
+	api.copies.list({'title_id':index}).done(function(data){
+		console.log('got it');
 
+		var data = {'copies':data};
+		console.log(data);
+		var copies_hb = $("#result-copies").html();
+		var copies_tmpl = Handlebars.compile(copies_hb);
+		var copies = copies_tmpl(data);
+		$copies.append(copies);
+		resetListeners();
+	}).fail(function(){
+		console.log('failed to fetch copies for '+index);
+	});
 
+	$copies.show();
+	resetListeners();
 }
-function resetListeners() {
+
+function sendNewCopy(data){
+	api.copies.create(data).done(function(){
+		console.log('copy creation succeeded');
+	}).fail(function(){
+		console.log('copy creation failed');
+	});
+}
+
+///what you were doing
+
+//1. remove a copy with button
+//2. add the copy to the list when the id comes back
+//3. clear out the new copy field.
+//4. update the copy when a field is edited.
+//5. require format when saving new one
+//6. provide a save button and a deletion alert, put deletes into a delete db
+//7. backup db
+
+function saveNewCopy($title){
+	console.log('going to add  a new copy');
+	var title_id = $title.data('index').toString().trim();
+	var format = $title.find('.newCopy.formatType').val().trim();
+	var edition = $title.find('.newCopy.editionEditor').val().trim();
+	var data = {'title_id':title_id,'format':format,'edition':edition};
+
+	console.log(data);
+	api.copies.create(data).done(function(d){
+		console.log('copy creation succeeded');
+		console.log('the new copies id is');
+		console.log(d);
+
+		data.index = d;
+
+		data.total = ($title.find('.copy').length + 1).toString();
+
+		console.log(data.total);
+		console.log(data);
+
+		var copy_hb   = $("#result-copy").html();
+		var copy_tmpl = Handlebars.compile(copy_hb);
+		var newCopy = copy_tmpl(data);
+
+		$title.find('.copies').append(newCopy);
+
+		$title.find('.newCopy.formatType').val('');
+		$title.find('.newCopy.editionEditor').val('');
+		resetListeners();
+
+	}).fail(function(){
+		console.log('copy creation failed');
+	});
+}
+
+function copyToObject($copy){
+	var index = $copy.data('index').toString().trim();
+	var format = $copy.find('.formatEditor').val().trim();
+	var edition = $copy.find('.editionEditor').val().trim();
+	var title_id = $copy.data('title_id').toString().trim();
+
+	var data = {'index':index,'format':format,'edition':edition,'title_id':title_id};
+	return data;
+}
+
+function updateCopy($copy){
+	var data = copyToObject($copy);
+
+	api.copies.update(data).done(function(d){
+		console.log('copy update completed');
+		console.log(d);
+	}).fail(function(){
+		console.log('copy update failed');
+	});
+}
+
+function removeCopy($copy){
+	var data = copyToObject($copy);
+
+	api.copies.remove(data).done(function(d){
+		console.log('copy removal completed');
+		console.log(d);
+
+		$copy.remove();
+	}).fail(function(){
+		alert('copy removal failed');
+	});
+}
+function initialListeners(){
+	$('.activator').click(function(){
+		activate($(this).parent());
+	});
+
 	$('.killit').click(function(e){
 		e.preventDefault();
 
@@ -96,37 +207,50 @@ function resetListeners() {
 		removeEntry(who);
 	});
 
-	$('[data-action="update"]').click(function(e){
-		e.preventDefault();
+}
+function resetListeners() {
 
-		var who = $(this).data('index');
-		var what = $(this).data('value');
-		var where = $(this).data('modifier');
-		var howmuch = parseInt($(this).parent().find('.'+what+'').text().trim());
-
-		if(where == 'add') {
-			howmuch++;
-		} else {
-			howmuch --;
-		}
-
-		if(howmuch >= 0) {
-			console.log(who);
-			console.log(howmuch);
-			console.log(what);
-
-			$(this).parent().find('.'+what+'').text(howmuch);
-
-			var blu = $(this).parent().parent().find('.blu').text();
-			var dvd = $(this).parent().parent().find('.dvd').text();
-			var tmdb_id = $(this).parent().parent().data('tmdb');
-			var all = {'blu':blu,'dvd':dvd,'tmdb_id':tmdb_id};
-
-			updateData(all);
-
-		}
-
+	$('.copyTool').blur(function(){
+		console.log('blurred the copy tool');
+		updateCopy($(this).parent().parent());
 	});
+
+	$('button.updateCopy').click(function(){
+		console.log('clicked update copy');
+		updateCopy($(this).parent().parent());
+	});
+
+	$('button.removeCopy').click(function(){
+		console.log('clicked remove copy');
+		removeCopy($(this).parent().parent());
+	});
+
+	$('button.newCopy').click(function(){
+		console.log('clicked new copy');
+		saveNewCopy($(this).parent().parent().parent().parent());
+	});
+
+}
+
+
+
+function createCopies($this) {
+	var data = resultToObject($this);
+	var copyData = {'title_id':data.index};
+	if(data.dvd > 0) {
+		for (var i=0; i<data.dvd; i++) {
+			var thisCopy = _.extend(copyData,{'format':'DVD'});
+			console.log(thisCopy);
+			sendNewCopy(thisCopy);
+		}
+	}
+	if(data.blu > 0) {
+		for (var i=0; i<data.blu; i++) {
+			var thisCopy = _.extend(copyData,{'format':'BLU'});
+			console.log(thisCopy);
+			sendNewCopy(thisCopy);
+		}
+	}
 }
 
 function crawlDown() {
@@ -136,15 +260,19 @@ function crawlDown() {
 	var intervalID = setInterval(function(){
 		if(count < globalData.length) {
 			$this = $($rows[count]);
-			var tmdb_id = $this.find('.tmdb').text().trim();
-			if($this.find('.imdb').text().trim() == '' || $this.find('.year').text().trim() == '????'){
-				hitAPI(tmdb_id);
-			}
+			// var tmdb_id = $this.find('.tmdb').text().trim();
+			// if($this.find('.imdb').text().trim() == '' || $this.find('.year').text().trim() == '????'){
+			// 	hitAPI(tmdb_id);
+			// }
+
+			createCopies($this)
+
+
 			count ++;
 		}	else {
 			clearInterval(intervalID);
 		}
-	}, 500);
+	}, 200);
 
 }
 
@@ -172,6 +300,7 @@ function writeResults(tmdb_id,d){
 	$target.find('.year .content').text(year);
 	$target.find('.imdb').html('<a href="http://www.imdb.com/title/'+imdb_id+'/" target="_blank">'+imdb_id+'</a>');
 
+
 	var data = {'tmdb_id':tmdb_id};
 	if(year){
 		data.year = year;
@@ -198,18 +327,27 @@ function updateData(data){
 	});
 }
 
+function resultToObject($result){
+	//could be $who = $('[data-index="'+who+'"]');
+	//or $who = $('[data-tmdb="'+who+'"]');
+	//but it is up to the caller to do that
+	var data = {};
+
+	data.year = $result.find('.year .content').text().trim();
+	data.title = $result.find('.title .content').text().trim();
+	data.imdb_id = $result.find('.tmdb').text().trim();
+	data.tmdb_id = $result.find('.imdb').text().trim();
+	data.blu = $result.find('.blu').text().trim();
+	data.dvd = $result.find('.dvd').text().trim();
+	data.index = $result.data('index').toString().trim();
+
+	return data;
+}
 
 function removeEntry(who){
 
-	var data= {'index':who};
-
 	var $who = $('[data-index="'+who+'"]');
-	data.year = $who.find('.year .content').text().trim();
-	data.title = $who.find('.title .content').text().trim();
-	data.imdb_id = $who.find('.tmdb').text().trim();
-	data.tmdb_id = $who.find('.tmdb').text().trim();
-	data.blu = $who.find('.blu').text().trim();
-	data.dvd = $who.find('.dvd').text().trim();
+	var data = resultToObject($who);
 
 	console.log('going to remove');
 	console.log(data);
@@ -246,30 +384,4 @@ $(document).ready(function(){
 
 });
 
-Handlebars.registerHelper('greaterThan', function(first, second, options) {
-  if(first > second) {
-    return options.fn(this);
-  } else {
-    return options.inverse(this);
-  }
-});
-
-Handlebars.registerHelper('equalTo', function(first, second, options) {
-  if(first == second) {
-    return options.fn(this);
-  } else {
-    return options.inverse(this);
-  }
-});
-
-Handlebars.registerHelper('dataQuality', function(imdb_id, year) {
-  var classes = [];
-  if(imdb_id == '') {
-  	classes.push('missingIMDB');
-  }
-  if(year == 0) {
-  	classes.push('missingYear');
-  }
-  return classes.join(' ');
-});
 

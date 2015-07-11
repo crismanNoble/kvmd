@@ -182,14 +182,24 @@ function locateIMDBID(result){
 	var success = function(d){
 		console.log('found byid:');
 		d = $.parseJSON(d);
+
 		$result.attr('data-imdbid',d.imdb_id);
 		console.log(d.imdb_id);
+		console.log(d);
+	}
+
+	var success2 = function(d){
+		console.log('found releases:');
+		d = $.parseJSON(d);
+		console.log(d);
 	}
 	var fail = function(d){
 		console.log(d);
 	}
 
 	theMovieDb.movies.getById({"id":tmdbid },success,fail);
+
+	theMovieDb.movies.getReleases({"id":tmdbid },success2,fail);
 
 }
 
@@ -549,13 +559,5 @@ $(document).ready(function(){
 		$('#helpme').toggle();
 	});
 
-});
-
-Handlebars.registerHelper('greaterThan', function(first, second, options) {
-  if(first > second) {
-    return options.fn(this);
-  } else {
-    return options.inverse(this);
-  }
 });
 

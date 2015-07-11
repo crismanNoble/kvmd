@@ -6,13 +6,63 @@
 	<script src="js/underscore.js"></script>
 	<script src="js/handlebars.js"></script>
 	<script src="js/tmdb.js"></script>
+	<script src="js/api.js"></script>
+	<script src="js/helpers.js"></script>
 
 	<script src="js/theseeds.js"></script>
 
+	<script id="result-copy" type="text/x-handlebars-template">
+			<div class="rowThing copy" data-index="{{index}}" data-title_id="{{title_id}}">
+				<div class="cell">{{total}}.</div>
+				<div class="cell"><input type="text" value="{{format}}" class="formatEditor copyTool"/ placeholder="format"></div>
+				<div class="cell"><input type="text" value="{{edition}}" class="editionEditor copyTool" placeholder="edition notes (optional)"/></div>
+				<div class="tools cell">
+	 				<button class="updateCopy tool" data-action="updateCopy" data-index="{{index}}">update copy</button>
+	 			</div>
+				<div class="tools cell">
+	 				<button class="tool removeCopy" data-action="removeCopy" data-index="{{index}}">delete copy</button>
+	 			</div>
+	 		</div>
+	</script>
+	<script id="result-copies" type="text/x-handlebars-template">
+		<h4>Copies:</h4>
+		<div class="copies">
+			{{#each copies}}
+			<div class="rowThing copy" data-index="{{index}}" data-title_id="{{title_id}}">
+				<div class="cell">{{humanIndex @index}}.</div>
+				<div class="cell"><input type="text" value="{{format}}" class="formatEditor copyTool"/ placeholder="format"></div>
+				<div class="cell"><input type="text" value="{{edition}}" class="editionEditor copyTool" placeholder="edition notes (optional)"/></div>
+				<div class="tools cell">
+	 				<button class="updateCopy tool" data-action="updateCopy" data-index="{{index}}">update copy</button>
+	 			</div>
+				<div class="tools cell">
+	 				<button class="tool removeCopy" data-action="removeCopy" data-index="{{index}}">delete copy</button>
+	 			</div>
+	 		</div>
+			{{/each}}
+		</div>
+		<div class="rowThing newCopyRow">
+			<div class="cell">+</div>
+			<div class="cell">
+				<input type="text" class="newCopy formatType" placeholder="format type (required)"/>
+			</div>
+			<div class="cell">
+				<input type="text" value="{{edition}}" class="newCopy editionEditor" placeholder="edition notes (optional)"/></div>
+			<div class="tools cell">
+ 				<button class="newCopy tool" data-action="newCopy" data-index="{{index}}">new copy</button>
+ 			</div>
+ 		</div>
+
+	</script>
 	<script id="result-titles" type="text/x-handlebars-template">
 		{{#each titles}}
 
 	 		<div data-index="{{index}}" data-tmdb="{{tmdb_id}}" class="row {{dataQuality imdb_id year}}">
+
+	 			<div class="cell activator">
+
+	 			</div>
+
 
 		    <div class="year cell">
 		    	{{#equalTo year 0}}
@@ -31,21 +81,12 @@
 		    	<a href="http://www.imdb.com/title/{{imdb_id}}/" target="_blank">{{imdb_id}}</a>
 	  		</div>
 
-	  		<div class="quantity cell">
-		    	<button class="dvdminus tool" data-action="update" data-index="{{index}}" data-value="dvd" data-modifier="subtract">-</button>
-		    	dvd:<span class="dvd">{{dvd}}</span>
-		    	<button class="dvdplus tool" data-action="update" data-index="{{index}}" data-value="dvd" data-modifier="add">+</button>
 
-		    </div>
-		    <div class="quantity cell">
-		    	<button class="bluminus tool" data-action="update" data-index="{{index}}" data-value="blu" data-modifier="subtract">-</button>
-		    	blu:<span class="blu">{{blu}}</span>
-		    	<button class="bluplus tool" data-action="update" data-index="{{index}}" data-value="blu" data-modifier="add">+</button>
-
-		    </div>
 		    <div class="tools cell">
 	 				<button class="killit tool" data-action="remove" data-index="{{index}}">remove</button>
 	 			</div>
+
+	 			<div class="extendedResults" data-title_id="{{index}}"></div>
 
 			</div>
 
@@ -53,28 +94,10 @@
 	</script>
 	<script src="js/app3.js"></script>
 
+	<link rel="stylesheet" href="css/style.css">
+
 	<style>
-	* {
-		font-family: monospace;
-	}
-	p {
-		margin: 0;
-	}
-	.cell {
-		padding: 0 5px;
 
-	}
-
-	.row {
-		padding: 2px;
-		border-top: 1px solid black;
-	}
-	.row {
-		overflow: auto;
-	}
-	.cell {
-		float: left;
-	}
 
 	</style>
 

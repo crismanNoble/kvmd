@@ -457,20 +457,3 @@ $(document).ready(function(){
 	});
 
 });
-
-Handlebars.registerHelper('greaterThan', function(first, second, options) {
-  if(first > second) {
-    return options.fn(this);
-  } else {
-    return options.inverse(this);
-  }
-});
-
-Handlebars.registerHelper('equalTo', function(first, second, options) {
-  if(first == second) {
-    return options.fn(this);
-  } else {
-    return options.inverse(this);
-  }
-});
-
