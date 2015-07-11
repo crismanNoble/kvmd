@@ -11,7 +11,7 @@
 
 	<script id="result-gdocs" type="text/x-handlebars-template">
 		{{#each seeds}}
-	  <div class="entry{{#if logged}} resultLogged{{/if}}" data-entry="{{@index}}" {{#if tmdbid}}data-tmdbid={{tmdbid}}{{/if}}>
+	  <div class="entry{{#equalTo logged "1"}} resultLogged{{/equalTo}}" data-entry="{{index}}" {{#if tmdbid}}data-tmdbid={{tmdbid}}{{/if}}>
 	  		<div class="quantity cell">
 		    	<span class="dvd">{{dvd}}</span>/<span class="blu">{{blu}}</span>
 		    </div>
@@ -19,12 +19,12 @@
 	  			<input type="text" value="{{title}}" class="title-input"/>
 	  		</div>
 	  		<div class="more cell">
-		    	<input type="text" value="{{more}}" class="more-input"/>
+		    	<input type="text" value="{{more}}{{details}}" class="more-input"/>
 		    </div>
 
 		    <div class="matches cell">{{hits}}{{tmdb_matches}}</div>
 
-		    <div class="results" data-results="{{@index}}"></div>
+		    <div class="results" data-results="{{index}}"></div>
 
 		 </div>
 

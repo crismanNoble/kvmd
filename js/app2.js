@@ -10,8 +10,8 @@ function syncWithServer(){
 		d = $.parseJSON(d);
 		console.log(d);
 		globalData = d;
-		//fetchSeeds();
-		showGoogleDocsInputs();
+		fetchSeeds();
+		//showGoogleDocsInputs();
 	});
 }
 
@@ -37,7 +37,6 @@ function fetchSeeds(){
 	$.ajax({
 	  type: "POST",
 	  url: url,
-	  data: input
 	}).done(function(output){
 		output = $.parseJSON(output);
 		console.log('theseeds are:');
@@ -60,6 +59,18 @@ function addSeed(input){
 	  data: input
 	}).done(function(output){
 		console.log('added to the seeds');
+	});
+}
+
+function updateSeed(input){
+	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/seeds/update/";
+
+	$.ajax({
+	  type: "POST",
+	  url: url,
+	  data: input
+	}).done(function(output){
+		console.log('updated that seed');
 	});
 }
 
@@ -133,17 +144,24 @@ function dataString() {
 }
 function showGoogleDocsInputs() {
 
+	console.log('showing the googleDocsResults');
+
 	seeds = _.map(seeds,function(d,i){
-		if(d.tmdbid){
-			if(inOurData(d.tmdbid)){
-				d.logged = 'logged';
+		if(d.tmdb_id && d.logged == '0'){
+			if(inOurData(d.tmdb_id)){
+				d.logged = '1';
+				updateSeed(d);
 				totalLogged++;
 			}
 		}
 		return d;
 	});
-	seeds = _.sortBy(seeds,'title');
+	seeds = _.sortBy(seeds,function (d){
+		return parseInt(d.index);
+	});
+
 	var d = {'seeds':seeds};
+		console.log(d);
 	var result   = $("#result-gdocs").html();
 	var result_templ = Handlebars.compile(result);
 	var movie = result_templ(d);
@@ -162,6 +180,7 @@ function extractDataFromResult($target) {
 	data.details = $target.find('.more-input').val().trim();
 	data.title = $target.find('.title-input').val().trim();
 	data.tmdb_matches = $target.find('.matches').text().trim();
+	data.index = $target.data('entry').toString();
 
 	if(data.tmdb_id) {
 		data.tmdb_id = data.tmdb_id.toString();
@@ -202,16 +221,16 @@ function activateResult(iterator,force) {
 	if(force || force === 0) {
 		newResult = force;
 	}
-	if(newResult >= 0 && newResult < seeds.length){
+	if(newResult >= 0){
 		var $target = $('[data-entry="'+newResult+'"]');
 
-		if($target.hasClass('resultLogged') || true){ //was || false
+		if($target.hasClass('resultLogged') || false){ //was || false
 			//todo: how to skep ahead??
 			//activateResult(1);
 
 			var seed = extractDataFromResult($target);
 			console.log(seed);
-			addSeed(seed);
+			//addSeed(seed);
 
 		} else {
 			$('.entry').removeClass('activated');
@@ -240,7 +259,7 @@ function hitAPI($target) {
 	var query = encodeURIComponent(title);
 	console.log(query);
 	query = {"query":query,"include_adult":true};
-	theMovieDb.search.getMovie(query, apiSuccess, apiError);
+	theMovieDb.search.getMulti(query, apiSuccess, apiError);
 
 	function apiError(d){
 		console.log('error');
@@ -290,8 +309,8 @@ function writeResults($target, results){
 
 }
 function initialListeners(){
-	$('.entry').click(function(e){
-		var which = $(this).data('entry');
+	$('.entry .title input').click(function(e){
+		var which = $(this).parent().parent().data('entry');
 		console.log(which);
 		activateResult(0,which);
 
@@ -329,6 +348,8 @@ function initialListeners(){
 
 			var $target = $(this).parent().parent();
 			var search = $(this).val();
+
+
 
 			hitAPI($target);
 
@@ -375,14 +396,13 @@ function logResult(entry,title,tmdb,year){
 	data.blu = $parent.find('.blu').text() || '0';
 	data.tmdb_id = tmdb.toString();
 
+	var seedData = extractDataFromResult($parent);
+	seedData.tmdb_id = data.tmdb_id;
+	updateSeed(seedData);
+
 	activateResult(1);
 
 	saveMovie(data);
-
-	seeds[entry].title = title;
-	seeds[entry].more = newMore;
-	seeds[entry].tmdbid = data.tmdb_id;
-	seeds[entry].logged = "logged";
 
 	var logged = parseInt($('#totalLogged').text());
 	logged += 1;
@@ -394,17 +414,13 @@ $(document).ready(function(){
 	//massageData();
 	syncWithServer();
 
-	var theTimeout = setInterval(function(){
-		activateResult(1);
-	},1000);
+	// var theTimeout = setInterval(function(){
+	// 	activateResult(1);
+	// },1000);
 
 	$('#showLogged').click(function(){
 		$('.resultLogged').toggle();
 	});
-
-
-
-
 
 	$(document).keyup(function(e){
 		//Enter: 13
@@ -435,15 +451,23 @@ $(document).ready(function(){
 		// if(e.which == 68) {
 		// 	console.log('right');
 		// }
-		if(e.which == 27) {
-			clearTimeout(theTimeout);
-		}
+		// if(e.which == 27) {
+		// 	clearTimeout(theTimeout);
+		// }
 	});
 
 });
 
 Handlebars.registerHelper('greaterThan', function(first, second, options) {
   if(first > second) {
+    return options.fn(this);
+  } else {
+    return options.inverse(this);
+  }
+});
+
+Handlebars.registerHelper('equalTo', function(first, second, options) {
+  if(first == second) {
     return options.fn(this);
   } else {
     return options.inverse(this);
