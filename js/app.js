@@ -4,6 +4,9 @@
 
 * all of these sleek changes are going to need to translate to the seeds page too
 
+* get a tv serach working
+* get a rudimentary upc search working too
+
 */
 var globalData = [];
 
