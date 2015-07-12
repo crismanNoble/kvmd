@@ -20,17 +20,19 @@
 
 	<script id="result-tmdb" type="text/x-handlebars-template">
 		{{#each results}}
-			<tr class="result" id="tmdbid_{{id}}" data-resultRow="{{@index}}">
-
-				<td class="counter">dvd<span class="count dvdcount">0</span>blu<span class="count blucount">0</span>
-				<!--<button class="clearout" data-result="{{@index}}">clear</button>-->
-				</td>
-				<td class="activator"><input type="text" id="result_{{@index}}" class="activated" data-result="{{@index}}"></input></td>
-				<td class="year"><p>{{year}}</p></td>
-		    <td class="title"><p>{{title}}</p></td>
-		    <td class="overview"><p>{{overview}}</p></td>
-		    <td class="tmdbid" style="display:none">{{id}}</td>
-		  </tr>
+			<div class="row result" id="tmdbid_{{id}}" data-resultRow="{{@index}}">
+				<div class="cell indicators">
+					<span class="dvd">dvd</span>|<span class="blu">blu</span>
+				</div>
+				<div class="activator cell">
+					<input type="text" id="result_{{@index}}" class="activated" data-result="{{@index}}" />
+				</div>
+				<div class="year cell"><p>{{year}}</p></div>
+		    <div class="title cell"><p>{{title}}</p></div>
+		    <div class="overview cell"><p>{{overview}}</p></div>
+		    <div class="tmdbid cell" style="display:none">{{id}}</div>
+		    <div class="copiesWrapper"></div>
+		  </div>
 		{{/each}}
 	</script>
 
@@ -185,16 +187,15 @@
 <div id="loading" style="display:none">loading...</div>
 
 
-<table id="results" style="display:none">
-	<tr>
-
-		<th>Own?</th>
-		<th></th>
-		<th>Year</th>
-		<th>Title</th>
-		<th>plot</th>
+<div id="results" style="display:none">
+	<div class="row">
+		<div class="col1 cell">&nbsp;</div>
+		<div class="col2 cell">&nbsp;</div>
+		<div class="col3 cell">Year</div>
+		<div class="col4 cell">Title</div>
+		<div class="col5 cell">plot</div>
 	</tr>
-</table>
+</div>
 <div id="nav"></div>
 <table id="omdb" class="resultSet">
 </table>
