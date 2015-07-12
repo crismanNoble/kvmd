@@ -1,15 +1,6 @@
 
-//only extend results when there the box is checked,
-//add a box for blueray / dvd
-//setup a server to recieve title, year, tmdbid, and imdbid
-
 
 /*what you were doing
-
-* make a new movie as soon as you click right or left, not blur.
-* add a new copy row when you click right or left with the proper format
-* the second row should not do a new title
-* allow people to edit the edition
 
 * all of these sleek changes are going to need to translate to the seeds page too
 
@@ -30,18 +21,18 @@ var saveMovie = function(data){
 }
 
 function updateQuantity(data){
-	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/update/";
+	// var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/update/";
 
-	$.ajax({
-	  type: "POST",
-	  url: url,
-	  data: data
-	}).done(function(d){
-		console.log('updated it it');
-		console.log(d);
-		globalData.push(data);
-		$('#tmdbid_'+data.tmdb_id).removeClass('needsLogged');
-	});
+	// $.ajax({
+	//   type: "POST",
+	//   url: url,
+	//   data: data
+	// }).done(function(d){
+	// 	console.log('updated it it');
+	// 	console.log(d);
+	// 	globalData.push(data);
+	// 	$('#tmdbid_'+data.tmdb_id).removeClass('needsLogged');
+	// });
 
 }
 
@@ -65,7 +56,6 @@ var newOMDBResult = function(d){
 	// templ += '<div class="year">'+d.Released+'</div>';
 	// templ += '<div class="imdbID">'+d.imdbID+'</div>';
 	// templ += '<div class="rating">'+d.Rated+'</div>';
-
 
 }
 
@@ -109,13 +99,10 @@ function highlightExisting() {
 		var tmdb_id_this = $(this).attr('id').split('_')[1];
 		if(inOurData(tmdb_id_this)) {
 			var ours = ourVersion(tmdb_id_this);
-
-			var $counter1 = $this.find('.dvdcount');
-			var $counter2 = $this.find('.blucount');
-
-			$counter1.text(ours.dvd);
-			$counter2.text(ours.blu);
-
+			console.log('ours says');
+			console.log(ours);
+			$(this).attr('data-title_id',ours.index);
+			$(this).attr('data-imdb_id',ours.imdb_id);
 			$this.addClass('owned');
 		}
 	});
@@ -150,64 +137,203 @@ function resetListeners(){
 		searchTMDB(searchString, false, thePage);
 	});
 
-	$('.activated').blur(function(){
-		saveThisResult($(this).data('result'));
-	});
+	// $('.activated').blur(function(){
+	// 	saveThisResult($(this).data('result'));
+	// });
 	$('.activated').focus(function(){
-		locateIMDBID($(this).data('result'));
+		activateResult($(this));
 	});
+
 	$('.activated').keyup(function(e){
 		var currentResult = parseInt($(this).data('result'));
+		var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
 
-		if(e.which == 40) {
+		if(e.which == 40) {//down
 			console.log('youpressed down');
 			console.log('currentlyOn:' + currentResult)
 
 			activateNextResult(currentResult);
 		}
-		if (e.which == 38) {
+		if (e.which == 38) {//up
 			activatePrevResult(currentResult);
 		}
 		if (e.which == 37) {//left
-			logDVD(currentResult);
+			logTitleAndCopy($result,'DVD');
 		}
 		if (e.which == 39) {//right
-			logBLU(currentResult);
+			logTitleAndCopy($result,'BLU');
 		}
-		if(e.which == 27) {
-			clearout(currentResult);
-		}
+		// if(e.which == 27) {
+		// 	clearout(currentResult);
+		// }
 
 	});
+}
 
+function resetCopyListeners(){
+
+	$('.copyTool').blur(function(){
+		console.log('blurred the copy tool');
+		updateCopy($(this).parent().parent());
+	});
+
+	$('button.updateCopy').click(function(){
+		console.log('clicked update copy');
+		updateCopy($(this).parent().parent());
+	});
+
+	$('button.removeCopy').click(function(){
+		console.log('clicked remove copy');
+		removeCopy($(this).parent().parent());
+	});
+}
+
+function removeCopy($copy){
+	var data = copyToObject($copy);
+
+	api.copies.remove(data).done(function(d){
+		console.log('copy removal completed');
+		console.log(d);
+
+		$copy.remove();
+	}).fail(function(){
+		alert('copy removal failed');
+	});
+}
+
+function copyToObject($copy){
+	var index = $copy.data('index').toString().trim();
+	var format = $copy.find('.formatEditor').val().trim();
+	var edition = $copy.find('.editionEditor').val().trim();
+	var title_id = $copy.data('title_id').toString().trim();
+
+	var data = {'index':index,'format':format,'edition':edition,'title_id':title_id};
+	return data;
+}
+
+function updateCopy($copy){
+	var data = copyToObject($copy);
+
+	api.copies.update(data).done(function(d){
+		console.log('copy update completed');
+		console.log(d);
+	}).fail(function(){
+		console.log('copy update failed');
+	});
+}
+
+
+function writeTheCopy(d,title_id){
+	console.log(d);
+
+	var $result = $('[data-title_id="'+title_id+'"]');
+
+	var $copies = $result.find('.copiesWrapper');
+	$copies.html('');
+
+	console.log($copies);
+
+	api.copies.list({'title_id':title_id}).then(function(d){
+		var results_data = {'copies': d};
+		console.log(results_data);
+
+		var results_hb   = $("#result-copies").html();
+		var results_tmpl = Handlebars.compile(results_hb);
+		var copies = results_tmpl(results_data);
+		$copies.append(copies);
+		resetCopyListeners();
+	});
 
 }
 
-function locateIMDBID(result){
-	var $result = $($('[data-resultRow="'+result+'"]')[0]);
-	var tmdbid = $result.find('.tmdbid').text();
+function createTheCopy(title_id,format) {
+	var data = {'title_id':title_id,'format':format};
 
-	var success = function(d){
-		console.log('found byid:');
-		d = $.parseJSON(d);
+	api.copies.create(data).done(function(d){
+		console.log('all done with creating the copy record:');
+		writeTheCopy(d, title_id);
+	}).fail(function(d){
+		alert('something went wrong');
+	});
+}
 
-		$result.attr('data-imdbid',d.imdb_id);
-		console.log(d.imdb_id);
-		console.log(d);
+function logTitleAndCopy($result,format) {
+	var owned = $result.hasClass('owned');
+
+	var $glow = $result.find('.'+format);
+	$glow.addClass('plusOne');
+	var timeoutID = window.setTimeout(function(){
+		$glow.removeClass('plusOne');
+	}, 200);
+
+	var data = {}
+
+	data.imdb_id = $result.data('imdb_id').toString().trim();
+	data.title = $result.find('.title').text();
+	data.year = $result.find('.year').text();
+	data.tmdb_id = $result.find('.tmdbid').text();
+
+
+
+	if(owned){
+		console.log('no need to log a title, its already there');
+		var title_id = $result.data('title_id').toString().trim();
+		createTheCopy(title_id,format);
+	} else {
+		console.log('we are going to need to create a title first');
+		$result.addClass('owned');
+
+
+		api.titles.create(data).done(function(d){
+			console.log('all done with creating the title record:');
+			$result.attr('data-title_id',d);
+			console.log(d);
+			createTheCopy(d,format);
+
+		}).fail(function(){
+			alert('something went wrong');
+		});
+
 	}
 
-	var success2 = function(d){
-		console.log('found releases:');
-		d = $.parseJSON(d);
-		console.log(d);
-	}
-	var fail = function(d){
-		console.log(d);
-	}
+}
 
-	theMovieDb.movies.getById({"id":tmdbid },success,fail);
 
-	theMovieDb.movies.getReleases({"id":tmdbid },success2,fail);
+function activateResult($this){
+	$('.result').removeClass('activatedRightNow');
+
+	$('.copiesWrapper').each(function(){
+		$(this).html('');
+	})
+
+	var $result = $($('[data-resultRow="'+$this.data('result')+'"]')[0]);
+	$result.addClass('activatedRightNow');
+	locateIMDBID($result);
+}
+
+function locateIMDBID($result){
+
+	if(!$result.data('imdb_id')){
+		console.log('I need the imdb_id');
+		var tmdb_id = $result.find('.tmdbid').text();
+
+		var success = function(d){
+			console.log('found byid:');
+			d = $.parseJSON(d);
+
+			$result.attr('data-imdb_id',d.imdb_id);
+			console.log(d.imdb_id);
+			console.log(d);
+		}
+
+		var fail = function(d){
+			console.log(d);
+		}
+
+		theMovieDb.movies.getById({"id":tmdb_id },success,fail);
+	} else {
+		console.log('already had the imdb_id');
+	}
 
 }
 
@@ -239,20 +365,11 @@ function saveThisResult(result){
 		data.blu = '0';
 	}
 
-	if($result.hasClass('needsLogged')){
-		if(inOurData(data.tmdb_id)){
-			console.log('we are going to do an update');
-			updateQuantity(data);
-		} else {
-			if(data.blu == '0' && data.dvd == '0') {
-				console.log('nothing to log');
-			} else {
-				console.log('sending:');
-				console.log(data);
-				saveMovie(data);
-				$result.addClass('owned');
-			}
-		}
+	if(!$result.hasClass('needsLogged')){
+		console.log('sending:');
+		console.log(data);
+		saveMovie(data);
+		$result.addClass('owned');
 	} else {
 		console.log('nothing changed');
 	}
@@ -260,30 +377,30 @@ function saveThisResult(result){
 }
 
 function clearout(currentResult) {
-	console.log(currentResult);
-	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
-	$result.addClass('needsLogged');
+	// console.log(currentResult);
+	// var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
+	// $result.addClass('needsLogged');
 
-	var $counter1 = $result.find('.dvdcount');
-	$counter1.addClass('clearedOut');
-	var $counter2 = $result.find('.blucount');
-	$counter2.addClass('clearedOut');
+	// var $counter1 = $result.find('.dvdcount');
+	// $counter1.addClass('clearedOut');
+	// var $counter2 = $result.find('.blucount');
+	// $counter2.addClass('clearedOut');
 
-	var timeoutID = window.setTimeout(function(){
-		$counter1.removeClass('clearedOut');
-		$counter2.removeClass('clearedOut');
-	}, 200);
-	$counter1.text(0);
-	$counter2.text(0);
+	// var timeoutID = window.setTimeout(function(){
+	// 	$counter1.removeClass('clearedOut');
+	// 	$counter2.removeClass('clearedOut');
+	// }, 200);
+	// $counter1.text(0);
+	// $counter2.text(0);
 
-	var data = {};
-	data.imdb_id = $result.data('imdbid');
-	data.dvd = $result.find('.dvdcount').text();
-	data.blu = $result.find('.blucount').text();
-	data.title = $result.find('.title').text();
-	data.tmdb_id = $result.find('.tmdbid').text();
+	// var data = {};
+	// data.imdb_id = $result.data('imdbid');
+	// data.dvd = $result.find('.dvdcount').text();
+	// data.blu = $result.find('.blucount').text();
+	// data.title = $result.find('.title').text();
+	// data.tmdb_id = $result.find('.tmdbid').text();
 
-	updateQuantity(data);
+	// updateQuantity(data);
 
 
 
@@ -293,7 +410,7 @@ function logDVD(currentResult){
 	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
 	$result.addClass('needsLogged');
 
-	var $counter = $result.find('.dvdcount');
+	var $counter = $result.find('.dvd');
 	$counter.addClass('plusOne');
 
 	var timeoutID = window.setTimeout(function(){
@@ -307,7 +424,7 @@ function logBLU(currentResult){
 	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
 	$result.addClass('needsLogged');
 
-	var $counter = $result.find('.blucount');
+	var $counter = $result.find('.blu');
 	$counter.addClass('plusOne');
 
 	var timeoutID = window.setTimeout(function(){
@@ -492,10 +609,6 @@ function hideManualForm($this) {
 	} else {
 		resetForm();
 	}
-
-
-
-
 
 }
 

@@ -18,6 +18,22 @@
 		  </tr>
 	</script>
 
+	<script id="result-copies" type="text/x-handlebars-template">
+		{{#each copies}}
+			<div class="rowThing copy" data-index="{{index}}" data-title_id="{{title_id}}">
+				<div class="cell">{{humanIndex @index}}.</div>
+				<div class="cell"><input type="text" value="{{format}}" class="formatEditor copyTool"/ placeholder="format"></div>
+				<div class="cell"><input type="text" value="{{edition}}" class="editionEditor copyTool" placeholder="edition notes (optional)"/></div>
+				<div class="tools cell">
+	 				<button class="updateCopy tool" data-action="updateCopy" data-index="{{index}}">update copy</button>
+	 			</div>
+				<div class="tools cell">
+	 				<button class="tool removeCopy" data-action="removeCopy" data-index="{{index}}">delete copy</button>
+	 			</div>
+	 		</div>
+		{{/each}}
+	</script>
+
 	<script id="result-tmdb" type="text/x-handlebars-template">
 		{{#each results}}
 			<div class="row result" id="tmdbid_{{id}}" data-resultRow="{{@index}}">
@@ -106,7 +122,10 @@
 				background-color: white;
 				transition: all .2s linear;
 			}
-			.count.plusOne {
+			.dvd,.blu {
+				transition: all .2s linear;
+			}
+			.plusOne {
 				background-color: green;
 			}
 			.count.clearedOut {
@@ -162,7 +181,8 @@
 <body>
 
 <div id="helpToggle"><a href="#">help?</a><br/><br/></div>
-<div id="helpme" style="display:none;">1. Search, results will begin to show up while typing.<br/>2. Press up/down keys to highlight a row.<br/>While a row is highlighted...<br/>3. Press left for dvd, press right for blu ray.<br/>4. Press escape to set the quantity back to zero.<br/>5. The movie will be logged to the database as soon as you switch rows or go back to the search box.<br/><br/> Grey text has already been added to inventory.<br/><br/>If the search doesn't give the correct results...<br/> Press the "Can't find it button", fill in as much info as you can, and the click "Save for Later"<br/><br/></div>
+<div id="helpme" style="display:none;">1. Search, results will begin to show up while typing.<br/>2. Press up/down keys to highlight a row.<br/>While a row is highlighted...<br/>3. Press left to create a dvd copy, press right for blu ray record.<br/>
+4. The title and the copy will be logged to the db as soon as you can see the copy record.<br/>5. If you want to add notes about the edition go ahead ad do that when the copy record pops up.<br/><br/>Grey text has already been added to inventory.<br/><br/>If the search doesn't give the correct results...<br/> Press the "Can't find it button", fill in as much info as you can, and the click "Save for Later"<br/><br/></div>
 
 <h3>Searchmode</h3>
 <input type="radio" name="searchType" value="tv"/>tv
