@@ -116,16 +116,6 @@ function sendNewCopy(data){
 	});
 }
 
-///what you were doing
-
-//1. remove a copy with button
-//2. add the copy to the list when the id comes back
-//3. clear out the new copy field.
-//4. update the copy when a field is edited.
-//5. require format when saving new one
-//6. provide a save button and a deletion alert, put deletes into a delete db
-//7. backup db
-
 function saveNewCopy($title){
 	console.log('going to add  a new copy');
 	var title_id = $title.data('index').toString().trim();
@@ -348,6 +338,18 @@ function removeEntry(who){
 
 	var $who = $('[data-index="'+who+'"]');
 	var data = resultToObject($who);
+
+	api.copies.list({'title_id':who}).done(function(copies){
+		console.log('list of copies for whom may be delted:');
+		console.log(copies);
+		_.each(copies,function(copy,i){
+			api.copies.remove(copy).done(function(d){
+				console.log('copy removal completed');
+			}).fail(function(){
+				alert('copy removal failed');
+			});
+		});
+	});
 
 	console.log('going to remove');
 	console.log(data);

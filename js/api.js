@@ -1,6 +1,7 @@
 var baseURL = 'http://kovalent.co/clients/kenvideo/kvmdb/api/';
 var api = {};
 api.copies = {}
+api.titles = {}
 
 api.copies.create = function(data){
 	var dfd = $.Deferred();
@@ -28,7 +29,7 @@ api.copies.list = function(data){
 
 	console.log('finding copies for');
 	console.log(data);
-	var url = baseURL + "/movies/copies/list/";
+	var url = baseURL + "movies/copies/list/";
 	$.ajax({
 	  type: "POST",
 	  url: url,
@@ -50,7 +51,7 @@ api.copies.update = function(data){
 
 	console.log('updating copy for');
 	console.log(data);
-	var url = baseURL + "/movies/copies/update/";
+	var url = baseURL + "movies/copies/update/";
 	$.ajax({
 	  type: "POST",
 	  url: url,
@@ -71,7 +72,7 @@ api.copies.remove = function(data){
 
 	console.log('removing copy for');
 	console.log(data);
-	var url = baseURL + "/movies/copies/remove/";
+	var url = baseURL + "movies/copies/remove/";
 	$.ajax({
 	  type: "POST",
 	  url: url,
@@ -81,6 +82,29 @@ api.copies.remove = function(data){
 		dfd.resolve(d);
 	}).error(function(d){
 		console.log('api.copies.remove: error');
+		dfd.reject(d);
+	});
+
+	return dfd.promise();
+}
+
+api.titles.create = function(data){
+	var url = baseURL + "movies/new/";
+
+	var dfd = $.Deferred();
+
+	console.log('create title:');
+	console.log(data);
+
+	$.ajax({
+	  type: "POST",
+	  url: url,
+	  data: data
+	}).success(function(d){
+		console.log('api.titles.create: success');
+		dfd.resolve(d);
+	}).error(function(d){
+		console.log('api.titles.create: error');
 		dfd.reject(d);
 	});
 

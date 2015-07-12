@@ -2,22 +2,30 @@
 //only extend results when there the box is checked,
 //add a box for blueray / dvd
 //setup a server to recieve title, year, tmdbid, and imdbid
+
+
+/*what you were doing
+
+* make a new movie as soon as you click right or left, not blur.
+* add a new copy row when you click right or left with the proper format
+* the second row should not do a new title
+* allow people to edit the edition
+
+* all of these sleek changes are going to need to translate to the seeds page too
+
+*/
 var globalData = [];
 
 var activeResult = 0;
 
 var saveMovie = function(data){
-	var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/new/";
 
-	$.ajax({
-	  type: "POST",
-	  url: url,
-	  data: data
-	}).done(function(d){
-		console.log('saved it');
+	api.titles.create(data).done(function(d){
 		console.log(d);
 		globalData.push(data);
 		$('#tmdbid_'+data.tmdb_id).removeClass('needsLogged');
+	}).fail(function(){
+		alert('something went wrong');
 	});
 }
 
