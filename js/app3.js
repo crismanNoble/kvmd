@@ -8,7 +8,7 @@ function syncWithServer(){
 	}).done(function(d){
 		console.log('synced it');
 		d = $.parseJSON(d);
-		//console.log(d);
+		console.log(d);
 		globalData = d;
 		d = sortOrFilter(d,'sort','entered');
 		showCurrentTitles(d);

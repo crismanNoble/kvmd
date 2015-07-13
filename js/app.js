@@ -8,9 +8,12 @@
 * get a rudimentary upc search working too
 
 */
+theMovieDb.common.api_key = "0489233d5a64e99ec2d3789a8f513c96";
 var globalData = [];
 
 var activeResult = 0;
+
+
 
 var saveMovie = function(data){
 
@@ -21,22 +24,6 @@ var saveMovie = function(data){
 	}).fail(function(){
 		alert('something went wrong');
 	});
-}
-
-function updateQuantity(data){
-	// var url = "http://kovalent.co/clients/kenvideo/kvmdb/api/movies/update/";
-
-	// $.ajax({
-	//   type: "POST",
-	//   url: url,
-	//   data: data
-	// }).done(function(d){
-	// 	console.log('updated it it');
-	// 	console.log(d);
-	// 	globalData.push(data);
-	// 	$('#tmdbid_'+data.tmdb_id).removeClass('needsLogged');
-	// });
-
 }
 
 var newOMDBResult = function(d){
@@ -59,6 +46,38 @@ var newOMDBResult = function(d){
 	// templ += '<div class="year">'+d.Released+'</div>';
 	// templ += '<div class="imdbID">'+d.imdbID+'</div>';
 	// templ += '<div class="rating">'+d.Rated+'</div>';
+
+}
+
+function newTMDBTvResult(d) {
+	$('#loading').hide();
+	$('.result').remove();
+	$('.nexty').remove();
+	if(d.results){
+		_.each(d.results,function(thisdata,i){
+			var yr = '_nf_'
+			if(thisdata.first_air_date) {
+				yr = (thisdata.first_air_date).split('-')[0];
+			}
+			d.results[i].year = yr;
+		});
+
+		var tmdbResult   = $("#result-tmdb-tv").html();
+		var tmdbResultTemplate = Handlebars.compile(tmdbResult);
+
+		var results    = tmdbResultTemplate(d);
+
+		$('#results').append(results);
+	}
+
+	var nextResults   = $("#result-tmdb-next").html();
+	var next_tmpl = Handlebars.compile(nextResults);
+	var next = next_tmpl(d);
+	$('#nav').append(next);
+
+	highlightExisting();
+
+	resetListeners();
 
 }
 
@@ -100,7 +119,7 @@ function highlightExisting() {
 	$('.result').each(function(){
 		$this = $(this);
 		var tmdb_id_this = $(this).attr('id').split('_')[1];
-		if(inOurData(tmdb_id_this)) {
+		if(inOurData(tmdb_id_this,'movie')) {
 			var ours = ourVersion(tmdb_id_this);
 			console.log('ours says');
 			console.log(ours);
@@ -109,6 +128,20 @@ function highlightExisting() {
 			$this.addClass('owned');
 		}
 	});
+
+	$('.season').each(function(){
+		$this = $(this);
+		console.log($(this));
+		var tmdb_id_this = $(this).data('tmdb_id').toString();
+		if(inOurData(tmdb_id_this,'series')) {
+			var ours = ourVersion(tmdb_id_this);
+			console.log('ours says');
+			console.log(ours);
+			$this.attr('data-title_id',ours.index);
+			$this.attr('data-imdb_id',ours.imdb_id);
+			$this.addClass('owned');
+		}
+	})
 }
 
 var extendResult = function(data) {
@@ -128,8 +161,9 @@ function resetListeners(){
 		var thePage = $(this).data('page') + 1;
 		var searchString = $('#searchbox').val();
 		console.log(thePage);
+		var mode = $('#searchType:checked').val();
 
-		searchTMDB(searchString, false, thePage);
+		searchTMDB(searchString, false, thePage, mode);
 	});
 
 	$('#prev').click(function(){
@@ -137,38 +171,45 @@ function resetListeners(){
 		var searchString = $('#searchbox').val();
 		console.log(thePage);
 
-		searchTMDB(searchString, false, thePage);
+		searchTMDB(searchString, false, thePage, mode);
 	});
 
-	// $('.activated').blur(function(){
-	// 	saveThisResult($(this).data('result'));
-	// });
 	$('.activated').focus(function(){
-		activateResult($(this));
+		var $who = $(this).parent().parent();
+		console.log($who.attr('class'));
+		activateResult($who);
 	});
 
 	$('.activated').keyup(function(e){
 		var currentResult = parseInt($(this).data('result'));
 		var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
 
-		if(e.which == 40) {//down
-			console.log('youpressed down');
-			console.log('currentlyOn:' + currentResult)
 
-			activateNextResult(currentResult);
-		}
-		if (e.which == 38) {//up
-			activatePrevResult(currentResult);
-		}
 		if (e.which == 37) {//left
 			logTitleAndCopy($result,'DVD');
 		}
 		if (e.which == 39) {//right
 			logTitleAndCopy($result,'BLU');
 		}
-		// if(e.which == 27) {
-		// 	clearout(currentResult);
-		// }
+
+	});
+}
+
+function resetSeasonListeners(){
+	$('.season .activated').focus(function(){
+		var $who = $(this).parent().parent();
+		console.log($who.attr('class'));
+		activateResult($who);
+	});
+
+	$('.season .activated').keyup(function(e){
+		var $copy = $(this).parent().parent();
+		if (e.which == 37) {//left
+			logTitleAndCopy($copy,'DVD');
+		}
+		if (e.which == 39) {//right
+			logTitleAndCopy($copy,'BLU');
+		}
 
 	});
 }
@@ -261,57 +302,125 @@ function createTheCopy(title_id,format) {
 }
 
 function logTitleAndCopy($result,format) {
-	var owned = $result.hasClass('owned');
+	if($result.hasClass('tvresult')){
+		console.log('i suppose i could log all the seasons at once... not yet tho');
+	} else if($result.hasClass('result')){
 
-	var $glow = $result.find('.'+format);
-	$glow.addClass('plusOne');
-	var timeoutID = window.setTimeout(function(){
-		$glow.removeClass('plusOne');
-	}, 200);
+		var owned = $result.hasClass('owned');
 
-	var data = {}
+		var $glow = $result.find('.'+format);
+		$glow.addClass('plusOne');
+		var timeoutID = window.setTimeout(function(){
+			$glow.removeClass('plusOne');
+		}, 200);
 
-	data.imdb_id = $result.data('imdb_id').toString().trim();
-	data.title = $result.find('.title').text();
-	data.year = $result.find('.year').text();
-	data.tmdb_id = $result.find('.tmdbid').text();
+		var data = {}
 
+		if($result.data('imdb_id')){
+			data.imdb_id = $result.data('imdb_id').toString().trim();
+		}
 
+		data.title = $result.find('.title').text();
+		data.year = $result.find('.year').text();
+		data.tmdb_id = $result.find('.tmdbid').text();
+		data.type = 'movie';
 
-	if(owned){
-		console.log('no need to log a title, its already there');
-		var title_id = $result.data('title_id').toString().trim();
-		createTheCopy(title_id,format);
+		if(owned){
+			console.log('no need to log a title, its already there');
+			var title_id = $result.data('title_id').toString().trim();
+			createTheCopy(title_id,format);
+		} else {
+			console.log('we are going to need to create a title first');
+			$result.addClass('owned');
+
+			api.titles.create(data).done(function(d){
+				console.log('all done with creating the title record:');
+				$result.attr('data-title_id',d);
+				console.log(d);
+				createTheCopy(d,format);
+
+			}).fail(function(){
+				alert('something went wrong');
+			});
+
+		}
 	} else {
-		console.log('we are going to need to create a title first');
-		$result.addClass('owned');
+		console.log('you tried to log a season eh?');
+		var $glow = $result.find('.'+format);
+		$glow.addClass('plusOne');
+		var timeoutID = window.setTimeout(function(){
+			$glow.removeClass('plusOne');
+		}, 200);
 
+		var $parent = $result.parent().parent();
 
-		api.titles.create(data).done(function(d){
-			console.log('all done with creating the title record:');
-			$result.attr('data-title_id',d);
-			console.log(d);
-			createTheCopy(d,format);
+		var series_tmdb_id = $parent.data('tmdb_id').toString().trim();
+		var season_tmdb_id = $result.data('tmdb_id').toString().trim();
 
-		}).fail(function(){
-			alert('something went wrong');
-		});
+		if($result.hasClass('owned')) {
+			console.log('well we already have that as a title, just create a copy');
+			var title_id = $result.data('title_id').toString().trim();
+			createTheCopy(title_id,format);
+		} else {
 
+			var data = {};
+
+			var year = $result.data('airdate');
+			if(year != ''){
+				year = year.split('-')[0];
+			}
+
+			data.type = 'series';
+			data.series_tmdb_id = series_tmdb_id;
+			data.tmdb_id = season_tmdb_id;
+			data.season_number = $result.data('season_number').toString().trim();
+			data.title = $parent.find('.title').text().trim();
+			data.year = year;
+
+			console.log('we need to log the title first');
+			console.log(data);
+
+			//$result.addClass('owned');
+
+			api.titles.create(data).done(function(d){
+				console.log('all done with creating the title record:');
+				$result.attr('data-title_id',d);
+				console.log(d);
+				createTheCopy(d,format);
+			}).fail(function(){
+				alert('something went wrong');
+			});
+
+		}
 	}
-
 }
 
+function findSeasonInfo($result){
+	var tmdb_id = $result.find('.tmdbid').text();
+	var success = function(d){
+			console.log('found tv byid:');
+			d = $.parseJSON(d);
+			console.log(d);
+			var season_data = {'seasons':d.seasons};
 
-function activateResult($this){
-	$('.result').removeClass('activatedRightNow');
+			console.log(season_data);
 
-	$('.copiesWrapper').each(function(){
-		$(this).html('');
-	})
+			$result.find('.extraInfo').text(d.number_of_seasons+' Seasons');
 
-	var $result = $($('[data-resultRow="'+$this.data('result')+'"]')[0]);
-	$result.addClass('activatedRightNow');
-	locateIMDBID($result);
+			var $seasons = $result.find('.seasonWrapper');
+			$seasons.html('');
+
+			var seasons_hb   = $("#result-seasons").html();
+			var seasons_tmpl = Handlebars.compile(seasons_hb);
+			var  seasons = seasons_tmpl(season_data);
+			$seasons.append(seasons);
+			highlightExisting();
+			resetSeasonListeners();
+	}
+	var fail = function(d){
+			console.log(d);
+		}
+	theMovieDb.tv.getById({"id":tmdb_id },success,fail);
 }
 
 function locateIMDBID($result){
@@ -340,8 +449,8 @@ function locateIMDBID($result){
 
 }
 
-function inOurData(tmdb_id){
-	var logged = _.where(globalData, {'tmdb_id':tmdb_id});
+function inOurData(tmdb_id,type){
+	var logged = _.where(globalData, {'tmdb_id':tmdb_id,'type':type});
 	return logged.length > 0;
 
 }
@@ -351,162 +460,157 @@ function ourVersion(tmdb_id){
 	return logged[0];
 }
 
-function saveThisResult(result){
-	var $result = $($('[data-resultRow="'+result+'"]')[0]);
-	var data = {};
-	data.imdb_id = $result.data('imdbid');
-	data.dvd = $result.find('.dvdcount').text();
-	data.blu = $result.find('.blucount').text();
-	data.title = $result.find('.title').text();
-	data.year = $result.find('.year').text();
-	data.tmdb_id = $result.find('.tmdbid').text();
+function resetActiveResult(){
+	resetActive();
 
-	if(data.dvd == '') {
-		data.dvd = '0';
-	}
-	if(data.blu == '') {
-		data.blu = '0';
-	}
+	$('.copiesWrapper').each(function(){
+		$(this).html('');
+	});
 
-	if(!$result.hasClass('needsLogged')){
-		console.log('sending:');
-		console.log(data);
-		saveMovie(data);
-		$result.addClass('owned');
-	} else {
-		console.log('nothing changed');
-	}
+	$('.seasonWrapper').each(function(){
+		$(this).html('');
+	});
 
+	$('.result .activated').each(function(){
+		$(this).removeClass('purpleActive');
+	});
 }
 
-function clearout(currentResult) {
-	// console.log(currentResult);
-	// var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
-	// $result.addClass('needsLogged');
-
-	// var $counter1 = $result.find('.dvdcount');
-	// $counter1.addClass('clearedOut');
-	// var $counter2 = $result.find('.blucount');
-	// $counter2.addClass('clearedOut');
-
-	// var timeoutID = window.setTimeout(function(){
-	// 	$counter1.removeClass('clearedOut');
-	// 	$counter2.removeClass('clearedOut');
-	// }, 200);
-	// $counter1.text(0);
-	// $counter2.text(0);
-
-	// var data = {};
-	// data.imdb_id = $result.data('imdbid');
-	// data.dvd = $result.find('.dvdcount').text();
-	// data.blu = $result.find('.blucount').text();
-	// data.title = $result.find('.title').text();
-	// data.tmdb_id = $result.find('.tmdbid').text();
-
-	// updateQuantity(data);
-
-
-
+function resetActive() {
+	$('.season .activated').removeClass('purpleActive');
+	$('.possiblyActive').removeClass('activatedRightNow');
 }
+function activateRow(iterator){
 
-function logDVD(currentResult){
-	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
-	$result.addClass('needsLogged');
+	var currentlyOn = globalActivated;
+	console.log('currently on ' + currentlyOn);
 
-	var $counter = $result.find('.dvd');
-	$counter.addClass('plusOne');
-
-	var timeoutID = window.setTimeout(function(){
-		$counter.removeClass('plusOne');
-	}, 200);
-	$counter.text(parseInt($counter.text()) + 1);
-
-}
-
-function logBLU(currentResult){
-	var $result = $($('[data-resultRow="'+currentResult+'"]')[0]);
-	$result.addClass('needsLogged');
-
-	var $counter = $result.find('.blu');
-	$counter.addClass('plusOne');
-
-	var timeoutID = window.setTimeout(function(){
-		$counter.removeClass('plusOne');
-	}, 200);
-
-	$counter.text(parseInt($counter.text()) + 1);
-
-}
-
-function activateNextResult(currentResult) {
-	var nextResult = 0;
-	if(currentResult !== undefined) {
-		nextResult = parseInt(currentResult) + 1;
-	}
-	console.log('heading to:' + nextResult);
-	$('#result_'+nextResult).focus();
-
-	$('.result').removeClass('activatedRightNow');
-	$('#result_'+nextResult).parent().parent().addClass('activatedRightNow');
-
-	//what about when you are at the end??
-}
-
-function activatePrevResult(currentResult) {
-	var nextResult = 0;
-	if(currentResult !== undefined && currentResult !== 0) {
-		nextResult = parseInt(currentResult) - 1;
-		console.log('heading to:' + nextResult);
-		$('#result_'+nextResult).focus();
-		$('.result').removeClass('activatedRightNow');
-		$('#result_'+nextResult).parent().parent().addClass('activatedRightNow');
-	}
-
-	if (currentResult == 0) {
-		$('.result').removeClass('activatedRightNow');
+	if(currentlyOn == 0 && iterator == -1) {
+		//back to search
+		globalActivated = null;
+		console.log('heading to searchbox');
 		$('#searchbox').val('');
 		$('#searchbox').focus();
+		resetActiveResult();
+
+	} else {
+		var headedTo = 0;
+		if(currentlyOn !== null) {
+			headedTo = currentlyOn + iterator;
+		}
+		globalActivated = headedTo;
+		console.log('headed to ' + headedTo);
+
+		var $active = $($('.possiblyActive')[headedTo]);
+
+
+		if($active.hasClass('result')){
+			activateAResultRow($active);
+		} else {
+			activateASeasonRow($active);
+		}
+
+		$active.find('.activated').focus();
+		activateColors($active);
+
 	}
 }
 
-function successCB2(data) {
-    console.log("rottentomatoes callback:");
-    console.log(data);
-	};
-	function TMDBSuccess(data,year) {
-    console.log("theMovieDb callback:");
-    data = $.parseJSON(data);
-    console.log(data);
-     newTMDBResult(data);
+function activateColors($row){
+	$row.find('.activated').addClass('purpleActive');
+	$row.addClass('activatedRightNow');
+}
 
-   	if(year){
-   		console.log('i heard you want a year');
-   	}
-	};
+function activateASeasonRow($row){
+	console.log('activating a season');
+	resetActive();
 
-function successCB2(data) {
-    console.log("openMovieDB callback:");
-    console.log(data);
-    newOMDBResult(data);
-	};
+	$result = $row.parent().parent();
+	globalActivated = parseInt($row.data('season_counter') + $result.data('resultrow'));
+	console.log('setting global activated back to ' + globalActivated);
 
-	function errorCB(data) {
-            console.log("Error callback:")
-            console.log(data);
-    };
+	activateColors($row);
+}
 
-function searchTMDB(searchString, year, page) {
+function activateAResultRow($row){
+
+	console.log('activating a result');
+	console.log($row);
+	resetActiveResult();
+	globalActivated = parseInt($row.data('resultrow'));
+	console.log('setting global activated back to ' + globalActivated);
+	if(mode == 'movie') {
+		locateIMDBID($row);
+	}
+	if(mode == 'tv') {
+		findSeasonInfo($row);
+	}
+
+	activateColors($row);
+
+}
+
+function activateResult($result){
+	console.log('you clicked it');
+
+	if($result.hasClass('result')) {
+		console.log('its a real result');
+		activateAResultRow($result);
+	} else {
+		console.log('its a season');
+		activateASeasonRow($result);
+	}
+
+}
+
+function activatePrevResult() {
+	activateRow(-1);
+}
+function activateNextResult() {
+	activateRow(1);
+}
+
+function TMDBMovieSuccess(data,year) {
+  console.log("theMovieDb movie search callback:");
+  data = $.parseJSON(data);
+  console.log(data);
+  newTMDBResult(data);
+
+};
+
+function TMDBTvSuccess(data){
+	console.log("theMovieDb tv search callback:");
+  data = $.parseJSON(data);
+  console.log(data);
+  newTMDBTvResult(data);
+}
+
+function errorCB() {
+	console.log('error');
+}
+
+function searchTMDB(searchString, year, mode, page) {
 		searchStringEnc = encodeURIComponent(searchString);
 		query = {"query":searchStringEnc,"include_adult":true};
+
 		if(page) {
 			query.page = page.toString();
 		}
 		if(year) {
 			query.primary_release_year = year.toString();
 		}
-		theMovieDb.search.getMovie(query, TMDBSuccess, errorCB);
+		if(mode == 'movie'){
+			theMovieDb.search.getMovie(query, TMDBMovieSuccess, errorCB);
+		} else if (mode == 'tv') {
+			theMovieDb.search.getTv(query, TMDBTvSuccess, errorCB);
+		}
+
 }
-  function doSearch(searchString, year){
+
+function doSearch(searchString, year){
+		globalActivated = null;
+		var mode = $('#searchType:checked').val();
+
   	$('#loading').show();
   	$('#results').show();
   	$('#initialMsg').hide();
@@ -514,25 +618,10 @@ function searchTMDB(searchString, year, page) {
   	activeResult = 0;
 
   	searchStringEnc = encodeURIComponent(searchString);
-  	// searchString2 = $.param({q:searchString});
-  	// searchString3 = $.param({t:searchString});
+
   	year = false;
-  	searchTMDB(searchString, year);
-
-  	theMovieDb.search.getMovie({"query":searchStringEnc}, TMDBSuccess, errorCB);
-
-  	// omdbQuery = 'http://www.omdbapi.com/?t='+searchString+'&y='+year+'&plot=full&r=json';
-
-  	// $.getJSON(omdbQuery).success(function(d){
-
-  	// 	successCB2(d);
-  	// });
-
-
-  	// $.getJSON('http://api.rottentomatoes.com/api/public/v1.0/movies.json?apikey=srfr7f2hcnbzrsgug6ffgnp3&q='+searchString+'&page_limit=1').success(function(d){
-  	// 	successCB3(d);
-  	// });
-  }
+  	searchTMDB(searchString, year, mode);
+}
 
 function syncWithServer(){
 	$.ajax({
@@ -543,7 +632,6 @@ function syncWithServer(){
 		d = $.parseJSON(d);
 		console.log(d);
 		globalData = d;
-
 	});
 }
 
@@ -615,10 +703,13 @@ function hideManualForm($this) {
 
 }
 
+var mode = 'movie';
+var globalActivated = null;
+
 $(document).ready(function(){
 
 	syncWithServer();
-	theMovieDb.common.api_key = "0489233d5a64e99ec2d3789a8f513c96";
+
 
 	$('#cantFindIt').mousedown(function(){
 		showManualForm();
@@ -628,12 +719,34 @@ $(document).ready(function(){
 		hideManualForm($(this));
 	});
 
-
+	$('[name="searchType"]').click(function(){
+		mode = $(this).val();
+		doSearch($('#searchbox').val(),false);
+	});
 
 	var searchInProgress = false;
+
+
+	$(document).keyup(function(e){
+		if(e.which == 40) {//down
+			e.preventDefault();
+			console.log('youpressed down');
+			console.log('currentlyOn:' + globalActivated)
+
+			activateNextResult(globalActivated);
+		}
+		if (e.which == 38) {//up
+			e.preventDefault();
+			activatePrevResult(globalActivated);
+		}
+	});
+
 	$('#searchbox').keyup(function(e){
 		e.preventDefault();
-		console.log(e.which); //down = 40,Right: 39,Left: 37,Esc: 27,Up: 38
+
+
+
+		// console.log(e.which); //down = 40,Right: 39,Left: 37,Esc: 27,Up: 38
 		//Enter: 13
 		// Up: 38
 		// Down: 40
@@ -651,29 +764,21 @@ $(document).ready(function(){
 			console.log('you hit enter');
 			console.log('doing the search for sure');
 		} else {
-			if(e.which == 40) {
-				console.log('youpressed down');
-				activateNextResult();
-			} else {
-				if(!searchInProgress){
-					if(query.length > 1){
-						doSearch(query, year);
-						searchInProgress = true;
-						setTimeout(function(){
-							console.log('searchReset');
-							searchInProgress = false;
-						},200);
-					}
-
-
-				} else {
-					console.log('too soon');
+			if(e.which == 40) {//down
+				e.preventDefault();
+			} else if(!searchInProgress){
+				if(query.length > 1){
+					doSearch(query, year);
+					searchInProgress = true;
+					setTimeout(function(){
+						console.log('searchReset');
+						searchInProgress = false;
+					},200);
 				}
-
+			} else {
+				console.log('too soon');
 			}
 		}
-
-
 
 
 	});

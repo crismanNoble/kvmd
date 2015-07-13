@@ -34,9 +34,40 @@
 		{{/each}}
 	</script>
 
+	<script id="result-tmdb-tv" type="text/x-handlebars-template">
+		{{#each results}}
+			<div class="row result possiblyActive tvresult" id="tmdbid_{{id}}" data-resultrow="{{@index}}" data-tmdb_id="{{id}}">
+				<!--<div class="cell indicators">
+				// 	<span class="dvd">dvd</span>|<span class="blu">blu</span>
+				</div> -->
+				<div class="activator cell">
+					<input type="text" id="result_{{@index}}" class="activated" data-result="{{@index}}" />
+				</div>
+				<div class="year cell"><p>{{year}}</p></div>
+		    <div class="title cell"><p>{{name}}</p></div>
+		    <div class="tmdbid cell" style="display:none">{{id}}</div>
+		    <div class="extraInfo cell"></div>
+		    <div class="seasonWrapper"></div>
+		  </div>
+		{{/each}}
+	</script>
+	<script id="result-seasons" type="text/x-handlebars-template">
+	  {{#each seasons}}
+	  <div class="row season possiblyActive" id="season_{{@index}}" data-tmdb_id="{{id}}" data-season_number="{{season_number}}" data-season_counter="{{humanIndex @index}}" data-airdate="{{air_date}}">
+  		<div class="cell indicators">
+				<span class="dvd">dvd</span>|<span class="blu">blu</span>
+			</div>
+			<div class="activator cell">
+					<input type="text" id="result_{{@index}}" class="activated" data-season="{{humanIndex @index}}" />
+				</div>
+	  	<div class="cell">Season {{season_number}}</div>
+	  </div>
+	  {{/each}}
+	</script>
+
 	<script id="result-tmdb" type="text/x-handlebars-template">
 		{{#each results}}
-			<div class="row result" id="tmdbid_{{id}}" data-resultRow="{{@index}}">
+			<div class="row result possiblyActive" id="tmdbid_{{id}}" data-resultrow="{{@index}}">
 				<div class="cell indicators">
 					<span class="dvd">dvd</span>|<span class="blu">blu</span>
 				</div>
@@ -184,12 +215,12 @@
 <div id="helpme" style="display:none;">1. Search, results will begin to show up while typing.<br/>2. Press up/down keys to highlight a row.<br/>While a row is highlighted...<br/>3. Press left to create a dvd copy, press right for blu ray record.<br/>
 4. The title and the copy will be logged to the db as soon as you can see the copy record.<br/>5. If you want to add notes about the edition go ahead ad do that when the copy record pops up.<br/><br/>Grey text has already been added to inventory.<br/><br/>If the search doesn't give the correct results...<br/> Press the "Can't find it button", fill in as much info as you can, and the click "Save for Later"<br/><br/></div>
 
-<!-- <h3>Searchmode</h3>
-<input type="radio" name="searchType" value="tv"/>tv
-<input type="radio" name="searchType" value="movies" checked/>movies
-<input type="radio" name="searchType" value="movies"/>upc
+<h3>Searchmode</h3>
+<input type="radio" id="searchType" name="searchType" value="tv"/>tv
+<input type="radio" id="searchType" name="searchType" value="movie" checked/>movie
+<!-- <input type="radio" id="searchType" name="searchType" value="upc"/>upc -->
 <br/>
-<br/> -->
+<br/>
 <div id="searchform">
 <input type="text" id="searchbox" placeholder="title"/>
 <input type="text" id="yearbox" placeholder="year" class="cantFindItHelper"/>
@@ -208,13 +239,13 @@
 
 
 <div id="results" style="display:none">
-	<div class="row">
+	<div class="heading row">
 		<div class="col1 cell">&nbsp;</div>
 		<div class="col2 cell">&nbsp;</div>
 		<div class="col3 cell">Year</div>
 		<div class="col4 cell">Title</div>
 		<div class="col5 cell">plot</div>
-	</tr>
+	</div>
 </div>
 <div id="nav"></div>
 <table id="omdb" class="resultSet">

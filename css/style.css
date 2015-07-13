@@ -78,3 +78,22 @@ p, h1, h2, h3,h4 {
 .result.row {
 	padding: 6px 0;
 }
+
+.heading.row {
+	border-top: none;
+  padding: 5px 0;
+}
+
+.seasonWrapper {
+  width: 100%;
+  overflow: auto;
+  padding: 5px 0;
+}
+
+.seasonWrapper {
+
+}
+
+.purpleActive {
+	background: purple;
+}
