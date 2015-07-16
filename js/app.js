@@ -764,6 +764,11 @@ $(document).ready(function(){
 			console.log('you hit enter');
 			console.log('doing the search for sure');
 		} else {
+			if(e.which == 38) {
+				e.preventDefault();
+				e.stopPropagation();
+				return false;
+			}
 			if(e.which == 40) {//down
 				e.preventDefault();
 			} else if(!searchInProgress){
